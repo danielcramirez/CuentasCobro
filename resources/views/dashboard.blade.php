@@ -3,10 +3,11 @@
 @section('title', 'Dashboard - CuentasCobro')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
+<main class="container-fluid">
+    <header class="row mb-4" aria-labelledby="dashboard-heading">
         <!-- Header del Dashboard -->
-        <div class="col-12 mb-4">
+        <div class="col-12">
+            <h2 id="dashboard-heading" class="sr-only">Dashboard</h2>
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h1 class="h3 mb-0 text-gray-800">
@@ -32,10 +33,11 @@
 
     @if($userRole === 'alcalde')
     <!-- Dashboard para Alcalde -->
-    <div class="row">
+    <section aria-labelledby="alcalde-stats" class="row">
+        <h2 id="alcalde-stats" class="sr-only">Estadísticas - Alcalde</h2>
         <!-- Estadísticas Generales -->
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
+            <article class="card border-left-primary shadow h-100 py-2" aria-labelledby="total-users">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -49,11 +51,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </article>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
+            <article class="card border-left-success shadow h-100 py-2" aria-labelledby="users-with-roles">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -67,11 +69,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </article>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
+            <article class="card border-left-info shadow h-100 py-2" aria-labelledby="total-roles">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -85,11 +87,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </article>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
+            <article class="card border-left-warning shadow h-100 py-2" aria-labelledby="without-role">
                 <div class="card-body">
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
@@ -103,24 +105,25 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </article>
         </div>
     </div>
 
     <!-- Acciones Rápidas para Alcalde -->
-    <div class="row">
+    <section aria-labelledby="alcalde-actions" class="row">
+        <h2 id="alcalde-actions" class="sr-only">Acciones Rápidas - Alcalde</h2>
         <div class="col-lg-6 mb-4">
-            <div class="card shadow">
-                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                    <h6 class="m-0 font-weight-bold text-primary">
+            <article class="card shadow" aria-labelledby="gestion-roles">
+                <header class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h3 id="gestion-roles" class="m-0 h6 font-weight-bold text-primary">
                         <i class="fas fa-users-cog me-2"></i>
                         Gestión de Roles
-                    </h6>
+                    </h3>
                     <a href="{{ route('roles.index') }}" class="btn btn-primary btn-sm">
                         <i class="fas fa-eye me-1"></i>
                         Ver Todos
                     </a>
-                </div>
+                </header>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -159,87 +162,88 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </article>
         </div>
 
         <div class="col-lg-6 mb-4">
-            <div class="card shadow">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-primary">
+            <article class="card shadow" aria-labelledby="recent-users">
+                <header class="card-header py-3">
+                    <h3 id="recent-users" class="m-0 h6 font-weight-bold text-primary">
                         <i class="fas fa-users me-2"></i>
                         Usuarios Recientes
-                    </h6>
-                </div>
+                    </h3>
+                </header>
                 <div class="card-body">
                     @if(isset($recentUsers) && $recentUsers->count() > 0)
                     <div class="table-responsive">
-                        <table class="table table-sm">
-                            <tbody>
-                                @foreach($recentUsers as $recentUser)
-                                <tr>
-                                    <td>
-                                        <i class="fas fa-user text-primary me-2"></i>
-                                        <strong>{{ $recentUser->name }}</strong>
-                                    </td>
-                                    <td>
+                        <ul class="list-unstyled mb-0">
+                            @foreach($recentUsers as $recentUser)
+                            <li class="d-flex justify-content-between align-items-start py-2 border-bottom">
+                                <div>
+                                    <i class="fas fa-user text-primary me-2"></i>
+                                    <strong>{{ $recentUser->name }}</strong>
+                                </div>
+                                <div class="text-end">
+                                    <div>
                                         @if($recentUser->role)
                                         <span class="badge bg-success">{{ $recentUser->role->name }}</span>
                                         @else
                                         <span class="badge bg-secondary">Sin rol</span>
                                         @endif
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">{{ $recentUser->created_at->diffForHumans() }}</small>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                                    </div>
+                                    <small class="text-muted d-block">{{ $recentUser->created_at->diffForHumans() }}</small>
+                                </div>
+                            </li>
+                            @endforeach
+                        </ul>
                     </div>
                     @else
                     <p class="text-muted text-center">No hay usuarios registrados recientemente.</p>
                     @endif
                 </div>
-            </div>
+            </article>
         </div>
     </div>
     @endif
 
     @if($userRole === 'supervisor')
     <!-- Dashboard para Supervisor -->
-    <div class="row">
+    <section aria-labelledby="supervisor-panel" class="row">
+        <h2 id="supervisor-panel" class="sr-only">Panel de Supervisor</h2>
         <div class="col-12">
-            <div class="card shadow">
+            <article class="card shadow">
                 <div class="card-body text-center py-5">
                     <i class="fas fa-user-check fa-4x text-success mb-3"></i>
                     <h4>Panel de Supervisor</h4>
                     <p class="text-muted">Aquí podrás revisar y aprobar cuentas de cobro.</p>
                     <p class="text-muted">Esta funcionalidad se implementará próximamente.</p>
                 </div>
-            </div>
+            </article>
         </div>
-    </div>
+    </section>
     @endif
 
     @if($userRole === 'contratista')
     <!-- Dashboard para Contratista -->
-    <div class="row">
+    <section aria-labelledby="contratista-panel" class="row">
+        <h2 id="contratista-panel" class="sr-only">Panel de Contratista</h2>
         <div class="col-12">
-            <div class="card shadow">
+            <article class="card shadow">
                 <div class="card-body text-center py-5">
                     <i class="fas fa-user-tie fa-4x text-primary mb-3"></i>
                     <h4>Panel de Contratista</h4>
                     <p class="text-muted">Aquí podrás crear y gestionar tus cuentas de cobro.</p>
                     <p class="text-muted">Esta funcionalidad se implementará próximamente.</p>
                 </div>
-            </div>
+            </article>
         </div>
-    </div>
+    </section>
     @endif
 
     @if(!$userRole)
     <!-- Usuario sin rol asignado -->
-    <div class="row">
+    <aside class="row" aria-labelledby="no-role-alert">
+        <h2 id="no-role-alert" class="sr-only">Sin rol asignado</h2>
         <div class="col-12">
             <div class="alert alert-warning" role="alert">
                 <h4 class="alert-heading">
@@ -251,14 +255,15 @@
                 <p class="mb-0">Mientras tanto, puedes explorar las funcionalidades básicas del sistema.</p>
             </div>
         </div>
-    </div>
+    </aside>
     @endif
 
     @if(in_array($userRole, ['ordenador_gasto', 'tesoreria', 'contratacion']))
     <!-- Dashboard para otros roles -->
-    <div class="row">
+    <section aria-labelledby="other-roles" class="row">
+        <h2 id="other-roles" class="sr-only">Paneles por rol</h2>
         <div class="col-12">
-            <div class="card shadow">
+            <article class="card shadow">
                 <div class="card-body text-center py-5">
                     @switch($userRole)
                         @case('ordenador_gasto')
@@ -279,11 +284,11 @@
                     @endswitch
                     <p class="text-muted">Esta funcionalidad se implementará próximamente.</p>
                 </div>
-            </div>
+            </article>
         </div>
-    </div>
+    </section>
     @endif
-</div>
+    </main>
 
 @push('styles')
 <style>
