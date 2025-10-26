@@ -1,3 +1,5 @@
+@extends('layouts.app')
+@section('dashboardRoles')
 <!-- Parcial: Contratista -->
 <section aria-labelledby="contratista-panel" class="row">
     <h2 id="contratista-panel" class="sr-only">Panel de Contratista</h2>
@@ -12,3 +14,4 @@
         </article>
     </div>
 </section>
+@endsection

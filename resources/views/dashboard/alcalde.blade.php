@@ -1,8 +1,5 @@
-@extends('layouts.app')
-
-@section('title', 'Dashboard - CuentasCobro')
-
-@section('content')
+@extends('dashboard.dashboard')
+@section('dashboardRoles')
 <!-- Parcial: Alcalde - Estadísticas y Acciones -->
 <section aria-labelledby="alcalde-stats" class="row">
     <h2 id="alcalde-stats" class="sr-only">Estadísticas - Alcalde</h2>

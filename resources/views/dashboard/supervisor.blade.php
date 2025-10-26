@@ -1,8 +1,5 @@
 @extends('layouts.app')
-
-@section('title', 'Dashboard - CuentasCobro')
-
-@section('content')
+@section('dashboardRoles')
 <!-- Parcial: Supervisor -->
 <section aria-labelledby="supervisor-panel" class="row">
     <h2 id="supervisor-panel" class="sr-only">Panel de Supervisor</h2>

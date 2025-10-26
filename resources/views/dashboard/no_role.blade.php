@@ -1,3 +1,5 @@
+@extends('layouts.app')
+@section('dashboardRoles')
 <!-- Parcial: Usuario sin rol -->
 <aside class="row" aria-labelledby="no-role-alert">
     <h2 id="no-role-alert" class="sr-only">Sin rol asignado</h2>
@@ -13,3 +15,4 @@
         </div>
     </div>
 </aside>
+@endsection

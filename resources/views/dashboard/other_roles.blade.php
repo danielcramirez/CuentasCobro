@@ -1,3 +1,5 @@
+@extends('layouts.app')
+@section('dashboardRoles')
 <!-- Parcial: Otros roles (ordenador_gasto, tesoreria, contratacion) -->
 <section aria-labelledby="other-roles" class="row">
     <h2 id="other-roles" class="sr-only">Paneles por rol</h2>
@@ -26,3 +28,4 @@
         </article>
     </div>
 </section>
+@endsection
