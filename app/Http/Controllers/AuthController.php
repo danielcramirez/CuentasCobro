@@ -68,8 +68,11 @@ class AuthController extends Controller
             'userRoleDescription' => $user->role ? $user->role->description : 'Sin rol asignado'
         ];
 
+        $dashboardLink = 'dashboard.dashboard';
+
         // Datos específicos para el alcalde
         if ($user->hasRole('alcalde')) {
+            $dashboardLink = 'dashboard.alcalde';
             $dashboardData = array_merge($dashboardData, [
                 'totalUsers' => User::count(),
                 'totalRoles' => Roles::count(),
@@ -83,6 +86,7 @@ class AuthController extends Controller
 
         // Datos específicos para supervisor
         if ($user->hasRole('supervisor')) {
+            $dashboardLink = 'dashboard.supervisor';
             $dashboardData = array_merge($dashboardData, [
                 'pendingReviews' => 0, // Aquí irían las cuentas de cobro pendientes
                 'approvedToday' => 0,
@@ -92,6 +96,7 @@ class AuthController extends Controller
 
         // Datos específicos para contratista
         if ($user->hasRole('contratista')) {
+            $dashboardLink = 'dashboard.contratista';
             $dashboardData = array_merge($dashboardData, [
                 'myCuentasCobro' => 0, // Aquí irían sus cuentas de cobro
                 'pendingApproval' => 0,
@@ -102,6 +107,7 @@ class AuthController extends Controller
 
         // Datos específicos para tesorería
         if ($user->hasRole('tesoreria')) {
+            $dashboardLink = 'dashboard.other_roles';
             $dashboardData = array_merge($dashboardData, [
                 'pendingPayments' => 0,
                 'paymentsToday' => 0,
@@ -111,6 +117,7 @@ class AuthController extends Controller
 
         // Datos específicos para ordenador del gasto
         if ($user->hasRole('ordenador_gasto')) {
+            $dashboardLink = 'dashboard.other_roles';
             $dashboardData = array_merge($dashboardData, [
                 'pendingAuthorizations' => 0,
                 'authorizedToday' => 0,
@@ -120,6 +127,7 @@ class AuthController extends Controller
 
         // Datos específicos para contratación
         if ($user->hasRole('contratacion')) {
+            $dashboardLink = 'dashboard.other_roles';
             $dashboardData = array_merge($dashboardData, [
                 'activeContracts' => 0,
                 'pendingContracts' => 0,
@@ -127,6 +135,6 @@ class AuthController extends Controller
             ]);
         }
 
-        return view('dashboard', $dashboardData);
+        return view($dashboardLink, $dashboardData);
     }
 }
