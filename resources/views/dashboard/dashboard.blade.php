@@ -24,43 +24,66 @@
                 <div class="text-end">
                     <small class="text-muted">
                         <i class="fas fa-calendar me-1"></i>
-                        {{ now()->format('d/m/Y H:i') }}
+                        <span id="clock" data-server-ts="{{ now()->timestamp }}">{{ now()->format('d/m/Y H:i:s') }}</span>
                     </small>
                 </div>
             </div>
         </div>
-    </div>
+        </div>
 
-    @includeWhen($userRole === 'alcalde', 'dashboard.alcalde', [
-        'totalUsers' => $totalUsers ?? 0,
-        'usersWithRoles' => $usersWithRoles ?? 0,
-        'totalRoles' => $totalRoles ?? 0,
-        'usersWithoutRoles' => $usersWithoutRoles ?? 0,
-        'systemRoles' => $systemRoles ?? collect(),
-        'rolesStats' => $rolesStats ?? collect(),
-        'recentUsers' => $recentUsers ?? collect(),
-    ])
+        @yield('dashboardRoles')
 
-    @includeWhen($userRole === 'supervisor', 'dashboard.supervisor')
+</main>
 
-    @includeWhen($userRole === 'contratista', 'dashboard.contratista')
+<script>
+    (function() {
+        const el = document.getElementById('clock');
+        if (!el) return;
 
-    @includeWhen(!$userRole, 'dashboard.no_role')
+        // Server timestamp in seconds (provided by Blade). If missing, fallback to client time.
+        const serverTsSec = parseInt(el.dataset.serverTs, 10);
+        let current = Number.isFinite(serverTsSec) ? serverTsSec * 1000 : Date.now();
 
-    @includeWhen(in_array($userRole, ['ordenador_gasto', 'tesoreria', 'contratacion']), 'dashboard.other_roles', ['userRole' => $userRole])
-    </main>
+        function pad(n) {
+            return String(n).padStart(2, '0');
+        }
+
+        function formatDate(ms) {
+            const d = new Date(ms);
+            const day = pad(d.getDate());
+            const month = pad(d.getMonth() + 1);
+            const year = d.getFullYear();
+            const hours = pad(d.getHours());
+            const minutes = pad(d.getMinutes());
+            const seconds = pad(d.getSeconds());
+            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function update() {
+            el.textContent = formatDate(current);
+            current += 1000; // increment one second
+        }
+
+        // Initial render and start ticking every second
+        update();
+        setInterval(update, 1000);
+    })();
+</script>
 
 @push('styles')
 <style>
     .border-left-primary {
         border-left: 0.25rem solid #4e73df !important;
     }
+
     .border-left-success {
         border-left: 0.25rem solid #1cc88a !important;
     }
+
     .border-left-info {
         border-left: 0.25rem solid #36b9cc !important;
     }
+
     .border-left-warning {
         border-left: 0.25rem solid #f6c23e !important;
     }
