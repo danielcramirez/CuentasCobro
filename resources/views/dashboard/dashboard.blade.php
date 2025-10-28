@@ -3,7 +3,81 @@
 @section('title', 'Dashboard - CuentasCobro')
 
 @section('content')
+
 <main class="container-fluid">
+    <!-- Navbar dinámico por rol -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">CuentasCobro</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    @if($userRole === 'alcalde')
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Reportes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Administración</a>
+                        </li>
+                    @elseif($userRole === 'contratista')
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Contrato</a>
+                        </li>
+                    @elseif($userRole === 'supervisor')
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Reportes</a>
+                        </li>
+                    @elseif($userRole === 'ordenador_gasto')
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Presupuesto</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Reportes Financieros</a>
+                        </li>
+                    @elseif($userRole === 'tesoreria')
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Procesar Pagos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Reportes Financieros</a>
+                        </li>
+                    @elseif($userRole === 'contratacion')
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Contratos</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">Reportes</a>
+                        </li>
+                    @endif
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Salir</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
     <header class="row mb-4" aria-labelledby="dashboard-heading">
         <!-- Header del Dashboard -->
         <div class="col-12">
@@ -29,12 +103,14 @@
                 </div>
             </div>
         </div>
-        </div>
+    </header>
 
-        @yield('dashboardRoles')
+    @yield('dashboardRoles')
 
 </main>
+@endsection
 
+@push('scripts')
 <script>
     (function() {
         const el = document.getElementById('clock');
@@ -69,6 +145,7 @@
         setInterval(update, 1000);
     })();
 </script>
+@endpush
 
 @push('styles')
 <style>
@@ -89,4 +166,3 @@
     }
 </style>
 @endpush
-@endsection
