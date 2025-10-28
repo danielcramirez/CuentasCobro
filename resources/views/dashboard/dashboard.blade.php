@@ -3,100 +3,102 @@
 @section('title', 'Dashboard - CuentasCobro')
 
 @section('content')
-
-<main class="container-fluid">
+<main class="container-fluid bg-[#DFDFDF] min-h-screen">
     <!-- Navbar dinámico por rol -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="#">CuentasCobro</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+    <nav class="navbar navbar-expand-lg bg-primary w-100 p-0 m-0 border-0" style="min-height: 56px;">
+        <div class="w-100 d-flex align-items-center">
+            <a class="navbar-brand text-light fw-bold ms-3" href="#">Cuentas de Cobro</a>
+            <button class="navbar-toggler ms-auto me-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto me-3">
                     @if($userRole === 'alcalde')
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                            <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Reportes</a>
+                            <a class="nav-link text-light" href="#">Reportes</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Administración</a>
+                            <a class="nav-link text-light" href="#">Administración</a>
                         </li>
                     @elseif($userRole === 'contratista')
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                            <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Contrato</a>
+                            <a class="nav-link text-light" href="#">Contrato</a>
                         </li>
                     @elseif($userRole === 'supervisor')
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                            <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Reportes</a>
+                            <a class="nav-link text-light" href="#">Reportes</a>
                         </li>
                     @elseif($userRole === 'ordenador_gasto')
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                            <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Presupuesto</a>
+                            <a class="nav-link text-light" href="#">Presupuesto</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Reportes Financieros</a>
+                            <a class="nav-link text-light" href="#">Reportes Financieros</a>
                         </li>
                     @elseif($userRole === 'tesoreria')
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                            <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Procesar Pagos</a>
+                            <a class="nav-link text-light" href="#">Procesar Pagos</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Reportes Financieros</a>
+                            <a class="nav-link text-light" href="#">Reportes Financieros</a>
                         </li>
                     @elseif($userRole === 'contratacion')
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Contratos</a>
+                            <a class="nav-link text-light" href="#">Contratos</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Cuentas de Cobro</a>
+                            <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Reportes</a>
+                            <a class="nav-link text-light" href="#">Reportes</a>
                         </li>
                     @endif
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Salir</a>
+                        <a class="nav-link text-light" href="#">Salir</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
+            </div>
+        </div>
+    </nav>
 
-    <header class="row mb-4" aria-labelledby="dashboard-heading">
+    <header class="row mb-4 bg-white rounded" aria-labelledby="dashboard-heading">
         <!-- Header del Dashboard -->
         <div class="col-12">
             <h2 id="dashboard-heading" class="sr-only">Dashboard</h2>
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h1 class="h3 mb-0 text-gray-800">
+                    <h1 class="h3 mb-0 text-primary">
                         <i class="fas fa-tachometer-alt me-2"></i>
                         Dashboard
                     </h1>
-                    <p class="text-muted mb-0">
+                    <p class="mb-0 text-dark">
                         Bienvenido, <strong>{{ $user->name }}</strong>
                         @if($userRole)
-                        - <span class="badge bg-primary">{{ ucfirst(str_replace('_', ' ', $userRole)) }}</span>
+                        - <span class="badge bg-primary text-light">{{ ucfirst(str_replace('_', ' ', $userRole)) }}</span>
                         @endif
                     </p>
                 </div>
                 <div class="text-end">
-                    <small class="text-muted">
+                    <small class="text-dark">
                         <i class="fas fa-calendar me-1"></i>
                         <span id="clock" data-server-ts="{{ now()->timestamp }}">{{ now()->format('d/m/Y H:i:s') }}</span>
                     </small>

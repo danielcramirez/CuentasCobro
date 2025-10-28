@@ -1,7 +1,7 @@
 @extends('dashboard.dashboard')
 @section('dashboardRoles')
 <!-- Parcial: Alcalde - Estadísticas y Acciones -->
-<section aria-labelledby="alcalde-stats" class="row">
+<section aria-labelledby="alcalde-stats" class="row mx-2 md:mx-8 lg:mx-10">
     <h2 id="alcalde-stats" class="sr-only">Estadísticas - Alcalde</h2>
     <!-- Estadísticas Generales -->
     <div class="col-xl-3 col-md-6 mb-4">
@@ -78,7 +78,7 @@
 </section>
 
 <!-- Acciones Rápidas para Alcalde -->
-<section aria-labelledby="alcalde-actions" class="row">
+<section aria-labelledby="alcalde-actions" class="row mx-2 md:mx-8 lg:mx-10">
     <h2 id="alcalde-actions" class="sr-only">Acciones Rápidas - Alcalde</h2>
     <div class="col-lg-6 mb-4">
         <article class="card shadow" aria-labelledby="gestion-roles">
