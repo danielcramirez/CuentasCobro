@@ -3,18 +3,21 @@
 @section('title', 'Dashboard - CuentasCobro')
 
 @section('content')
-<main class="container-fluid bg-[#DFDFDF] min-h-screen">
+<main class="container-fluid bg-[#DFDFDF] min-h-screen p-0">
     <!-- Navbar dinámico por rol -->
-    <nav class="navbar navbar-expand-lg bg-primary w-100 p-0 m-0 border-0" style="min-height: 56px;">
-        <div class="w-100 d-flex align-items-center">
-            <a class="navbar-brand text-light fw-bold ms-3" href="#">Cuentas de Cobro</a>
-            <button class="navbar-toggler ms-auto me-3" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto me-3">
-                    @if($userRole === 'alcalde')
+    <nav class="navbar navbar-expand-lg bg-primary w-100 p-0 m-0 border-0 custom-navbar"
+        style="width: 100vw; min-height: 56px;">
+        <div class="container-fluid p-0 m-0">
+            <div class="d-flex align-items-center w-100">
+                <a class="navbar-brand text-light fw-bold ms-3" href="#">Cuentas de Cobro</a>
+                <button class="navbar-toggler text-light border-0" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto ms-lg-4">
+                        @if($userRole === 'alcalde')
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
@@ -24,21 +27,21 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Administración</a>
                         </li>
-                    @elseif($userRole === 'contratista')
+                        @elseif($userRole === 'contratista')
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Contrato</a>
                         </li>
-                    @elseif($userRole === 'supervisor')
+                        @elseif($userRole === 'supervisor')
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Reportes</a>
                         </li>
-                    @elseif($userRole === 'ordenador_gasto')
+                        @elseif($userRole === 'ordenador_gasto')
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
@@ -48,7 +51,7 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Reportes Financieros</a>
                         </li>
-                    @elseif($userRole === 'tesoreria')
+                        @elseif($userRole === 'tesoreria')
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Cuentas de Cobro</a>
                         </li>
@@ -58,7 +61,7 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Reportes Financieros</a>
                         </li>
-                    @elseif($userRole === 'contratacion')
+                        @elseif($userRole === 'contratacion')
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Contratos</a>
                         </li>
@@ -68,19 +71,41 @@
                         <li class="nav-item">
                             <a class="nav-link text-light" href="#">Reportes</a>
                         </li>
-                    @endif
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Salir</a>
-                    </li>
-                </ul>
+                        @endif
+                    </ul>
+                    <!-- Botón de sidebar a la derecha -->
+                    <button class="btn text-light ms-auto me-3" type="button" data-bs-toggle="offcanvas"
+                        data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
+                        <i class="fas fa-bars fa-lg"></i>
+                    </button>
+                </div>
             </div>
-        </div>
-    </nav>
-            </div>
-        </div>
     </nav>
 
-    <header class="row mb-4 bg-white rounded" aria-labelledby="dashboard-heading">
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
+        <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="sidebarMenuLabel">Menú</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+        </div>
+        <div class="offcanvas-body">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Perfil</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#">Configuración</a>
+                </li>
+                <li class="nav-item">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="nav-link btn btn-link px-0 text-start">Salir</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <header class="row mt-2 mb-3 bg-white rounded mx-2 md:mx-8 lg:mx-10" aria-labelledby="dashboard-heading">
         <!-- Header del Dashboard -->
         <div class="col-12">
             <h2 id="dashboard-heading" class="sr-only">Dashboard</h2>
@@ -93,15 +118,10 @@
                     <p class="mb-0 text-dark">
                         Bienvenido, <strong>{{ $user->name }}</strong>
                         @if($userRole)
-                        - <span class="badge bg-primary text-light">{{ ucfirst(str_replace('_', ' ', $userRole)) }}</span>
+                        - <span class="badge bg-primary text-light">{{ ucfirst(str_replace('_', ' ', $userRole))
+                            }}</span>
                         @endif
                     </p>
-                </div>
-                <div class="text-end">
-                    <small class="text-dark">
-                        <i class="fas fa-calendar me-1"></i>
-                        <span id="clock" data-server-ts="{{ now()->timestamp }}">{{ now()->format('d/m/Y H:i:s') }}</span>
-                    </small>
                 </div>
             </div>
         </div>
@@ -112,59 +132,23 @@
 </main>
 @endsection
 
-@push('scripts')
-<script>
-    (function() {
-        const el = document.getElementById('clock');
-        if (!el) return;
-
-        // Server timestamp in seconds (provided by Blade). If missing, fallback to client time.
-        const serverTsSec = parseInt(el.dataset.serverTs, 10);
-        let current = Number.isFinite(serverTsSec) ? serverTsSec * 1000 : Date.now();
-
-        function pad(n) {
-            return String(n).padStart(2, '0');
-        }
-
-        function formatDate(ms) {
-            const d = new Date(ms);
-            const day = pad(d.getDate());
-            const month = pad(d.getMonth() + 1);
-            const year = d.getFullYear();
-            const hours = pad(d.getHours());
-            const minutes = pad(d.getMinutes());
-            const seconds = pad(d.getSeconds());
-            return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-        }
-
-        function update() {
-            el.textContent = formatDate(current);
-            current += 1000; // increment one second
-        }
-
-        // Initial render and start ticking every second
-        update();
-        setInterval(update, 1000);
-    })();
-</script>
-@endpush
-
 @push('styles')
 <style>
-    .border-left-primary {
-        border-left: 0.25rem solid #4e73df !important;
+    .custom-navbar.bg-primary {
+        background-color: var(--color-primary) !important;
     }
 
-    .border-left-success {
-        border-left: 0.25rem solid #1cc88a !important;
+    .custom-navbar .navbar-brand,
+    .custom-navbar .nav-link {
+        color: var(--color-light) !important;
     }
 
-    .border-left-info {
-        border-left: 0.25rem solid #36b9cc !important;
-    }
-
-    .border-left-warning {
-        border-left: 0.25rem solid #f6c23e !important;
+    .custom-navbar .nav-link.active,
+    .custom-navbar .nav-link:focus,
+    .custom-navbar .nav-link:hover {
+        color: var(--color-primary) !important;
+        background-color: var(--color-light) !important;
+        border-radius: 0.25rem;
     }
 </style>
 @endpush
