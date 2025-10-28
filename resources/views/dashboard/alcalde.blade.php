@@ -5,7 +5,7 @@
     <h2 id="alcalde-stats" class="sr-only">Estadísticas - Alcalde</h2>
     <!-- Estadísticas Generales -->
     <div class="col-xl-3 col-md-6 mb-4">
-        <article class="card border-left-primary shadow h-100 py-2" aria-labelledby="total-users">
+    <article class="card h-100 py-2" aria-labelledby="total-users" style="border-left: 0.25rem solid var(--color-primary);">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -23,7 +23,7 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <article class="card border-left-success shadow h-100 py-2" aria-labelledby="users-with-roles">
+    <article class="card h-100 py-2" aria-labelledby="users-with-roles" style="border-left: 0.25rem solid var(--color-primary);">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -41,7 +41,7 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <article class="card border-left-info shadow h-100 py-2" aria-labelledby="total-roles">
+    <article class="card h-100 py-2" aria-labelledby="total-roles" style="border-left: 0.25rem solid var(--color-primary);">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -59,7 +59,7 @@
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
-        <article class="card border-left-warning shadow h-100 py-2" aria-labelledby="without-role">
+    <article class="card h-100 py-2" aria-labelledby="without-role" style="border-left: 0.25rem solid var(--color-primary);">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
@@ -81,7 +81,7 @@
 <section aria-labelledby="alcalde-actions" class="row mx-2 md:mx-8 lg:mx-10">
     <h2 id="alcalde-actions" class="sr-only">Acciones Rápidas - Alcalde</h2>
     <div class="col-lg-6 mb-4">
-        <article class="card shadow" aria-labelledby="gestion-roles">
+        <article class="card " aria-labelledby="gestion-roles">
             <header class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                 <h3 id="gestion-roles" class="m-0 h6 font-weight-bold text-primary">
                     <i class="fas fa-users-cog me-2"></i>
@@ -134,7 +134,7 @@
     </div>
 
     <div class="col-lg-6 mb-4">
-        <article class="card shadow" aria-labelledby="recent-users">
+        <article class="card " aria-labelledby="recent-users">
             <header class="card-header py-3">
                 <h3 id="recent-users" class="m-0 h6 font-weight-bold text-primary">
                     <i class="fas fa-users me-2"></i>
