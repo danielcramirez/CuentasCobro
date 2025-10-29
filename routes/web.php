@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CrearUsuario;
 use App\Http\Controllers\RolControler;
+use App\Http\Controllers\CuentaCobroController;
 
 // Ruta raíz redirige al login
 Route::get('/', function () {
@@ -24,19 +25,30 @@ Route::middleware(['auth'])->group(function () {
     
     // Dashboard
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
+
+    // Rutas de Cuentas de Cobro
+    Route::resource('cuentas-cobro', CuentaCobroController::class)->names([
+        'index' => 'cuentas-cobro.mostrar',
+        'create' => 'cuentas-cobro.crear',
+        'store' => 'cuentas-cobro.store',
+        'edit' => 'cuentas-cobro.edit',
+        'destroy' => 'cuentas-cobro.destroy'
+    ]);
+
+    //Route::get('/cuentas-cobro', [CuentaCobroController::class, 'index'])->name('cuentas-cobro.mostrar');
+
+
     
     // Rutas de Roles (Resource Routes)
-    Route::middleware(['auth'])->group(function () {
-        Route::resource('roles', RolControler::class)->except(['show'])->names([
-            'index' => 'roles.index',
-            'create' => 'roles.create',
-            'store' => 'roles.store',
-            'edit' => 'roles.edit',
-            'update' => 'roles.update',
-            'destroy' => 'roles.destroy'
-        ]);
-    });
-    
+    Route::resource('roles', RolControler::class)->except(['show'])->names([
+        'index' => 'roles.index',
+        'create' => 'roles.create',
+        'store' => 'roles.store',
+        'edit' => 'roles.edit',
+        'update' => 'roles.update',
+        'destroy' => 'roles.destroy'
+    ]);
+
     // Ruta personalizada para show (usando {role} en lugar de {id})
     Route::get('/roles/{role}', [RolControler::class, 'show'])->name('roles.show');
     

@@ -26,6 +26,8 @@
     @stack('styles')
 </head>
 <body>
+    @include('partials.navbar')
+    
     @yield('content')
     
     <!-- Bootstrap JS -->
