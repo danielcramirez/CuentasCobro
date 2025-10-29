@@ -27,7 +27,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 
     // Rutas de Cuentas de Cobro
-    Route::resource('cuentas-cobro', CuentaCobroController::class)->names([
+    Route::resource('cuentas-cobro', CuentaCobroController::class)
+        ->except(['show'])
+        ->names([
         'index' => 'cuentas-cobro.mostrar',
         'create' => 'cuentas-cobro.crear',
         'store' => 'cuentas-cobro.store',
