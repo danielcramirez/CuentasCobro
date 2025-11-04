@@ -5,7 +5,7 @@
     <section>
     <h1>Crear Cuenta de Cobro</h1>
 
-    <form action="{{ route('cuentas-cobro.store') }}" method="POST">
+    <form action="{{ route('cuentas-cobro.store') }}" method="POST" enctype="multipart/form-data">
         @csrf
         <!-- Campos del formulario -->
         <div class="mb-3">
