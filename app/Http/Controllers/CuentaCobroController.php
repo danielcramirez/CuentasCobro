@@ -45,7 +45,7 @@ class CuentaCobroController extends Controller
             foreach ($request->file('documentos') as $file) {
                 $nombre = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
                 $ext = $file->getClientOriginalExtension();
-                $ruta = 'ArchivoAlmacenados/' . date('Y/m') . '/' . $user->id . '/' . $nombre . '-' . time() . '.' . $ext;
+                $ruta = 'CuentasCobro/' . date('Y-m') . '/' . $user->id . '/' . $nombre . '-' . time() . '.' . $ext;
                 $saved = Storage::disk($disk)->put($ruta, fopen($file->getRealPath(), 'r+'));
                 if ($saved) {
                     $rutasDocumentos[] = $ruta;
@@ -71,7 +71,7 @@ class CuentaCobroController extends Controller
 
     public function edit($id)
     {
-        $cuenta = CuentaCobro::findOrFail($id);
+        
         return view('cuentasCobro.editarCuenta', compact('cuenta'));
     }
 

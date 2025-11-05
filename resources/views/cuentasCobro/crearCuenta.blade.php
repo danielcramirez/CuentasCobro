@@ -1,5 +1,4 @@
 @extends('layouts.app')
-
 @section('title', 'Crear Cuenta de Cobro - CuentasCobro')
 
 @section('content')
@@ -8,14 +7,38 @@
     <!-- Header de la página -->
     <div class="max-w-4xl mx-auto mb-8">
         <div class="glass-card p-6 slide-up">
-            <div class="flex items-center space-x-4">
-                <div class="gradient-primary w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg">
-                    <i class="fas fa-file-plus text-white text-2xl"></i>
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="gradient-primary w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-file-plus text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-800 font-poppins">Crear Cuenta de Cobro</h1>
+                        <p class="text-gray-600">Complete el formulario para generar una nueva solicitud de pago</p>
+                    </div>
                 </div>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-800 font-poppins">Crear Cuenta de Cobro</h1>
-                    <p class="text-gray-600">Complete el formulario para generar una nueva solicitud de pago</p>
-                </div>
+                <!-- Breadcrumb de navegación -->
+                <nav class="hidden md:flex" aria-label="Breadcrumb">
+                    <ol class="flex items-center space-x-2 text-sm">
+                        <li>
+                            <a href="{{ route('dashboard') }}" class="text-gray-500 hover:text-gray-700 transition-colors">
+                                <i class="fas fa-home"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <span class="text-gray-400">/</span>
+                        </li>
+                        <li>
+                            <a href="{{ route('cuentas-cobro.mostrar') }}" class="text-gray-500 hover:text-gray-700 transition-colors">
+                                Cuentas de Cobro
+                            </a>
+                        </li>
+                        <li>
+                            <span class="text-gray-400">/</span>
+                        </li>
+                        <li class="text-gray-900 font-medium">Crear</li>
+                    </ol>
+                </nav>
             </div>
         </div>
     </div>
@@ -289,7 +312,8 @@
                     
                     <div class="flex space-x-4">
                         <button type="button" 
-                                class="inline-flex items-center justify-center px-6 py-3 border-2 border-blue-300 text-blue-700 bg-blue-50 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all duration-300 font-medium">
+                                class="inline-flex items-center justify-center px-6 py-3 border-2 border-blue-300 text-blue-700 bg-blue-50 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all duration-300 font-medium"
+                                id="draft-btn">
                             <i class="fas fa-save mr-2"></i>
                             Guardar como Borrador
                         </button>
@@ -330,6 +354,9 @@
         </div>
     </div>
 </div>
+
+<!-- Toast Notifications Container -->
+<div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 @endsection
 
 @push('styles')
@@ -343,6 +370,7 @@
     .upload-dragover {
         border-color: #6366f1 !important;
         background-color: #eef2ff !important;
+        transform: scale(1.02);
     }
     
     /* Animación de archivo seleccionado */
@@ -360,13 +388,200 @@
             transform: translateY(0);
         }
     }
+    
+    /* Efectos de validación en tiempo real */
+    .field-valid {
+        border-color: #10b981 !important;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    }
+    
+    .field-invalid {
+        border-color: #ef4444 !important;
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+    
+    /* Animaciones de progreso */
+    .progress-complete {
+        background: linear-gradient(45deg, #10b981, #059669);
+        box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+    }
+    
+    .progress-partial {
+        background: linear-gradient(45deg, #3b82f6, #1d4ed8);
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+    
+    .progress-start {
+        background: linear-gradient(45deg, #f59e0b, #d97706);
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+    }
+    
+    /* Toast notifications */
+    .toast-enter {
+        animation: toastSlideIn 0.3s ease-out;
+    }
+    
+    .toast-exit {
+        animation: toastSlideOut 0.3s ease-in;
+    }
+    
+    @keyframes toastSlideIn {
+        from {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes toastSlideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+    }
+    
+    /* Efectos de hover mejorados para botones */
+    .btn-primary:not(:disabled):hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+    }
+    
+    .btn-secondary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Animación de pulso para elementos importantes */
+    .pulse-success {
+        animation: pulseGreen 2s infinite;
+    }
+    
+    @keyframes pulseGreen {
+        0% {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+        70% {
+            box-shadow: 0 0 0 10px rgba(16, 185, 129, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+    }
+    
+    /* Mejoras para el modal */
+    .modal-backdrop {
+        backdrop-filter: blur(8px);
+        background: rgba(0, 0, 0, 0.4);
+    }
+    
+    .modal-content {
+        transform: scale(0.95);
+        transition: transform 0.3s ease-out;
+    }
+    
+    .modal-content.show {
+        transform: scale(1);
+    }
+    
+    /* Efectos de carga */
+    .loading-spinner {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+    
+    /* Efectos de escritura para el auto-guardado */
+    .auto-save-indicator {
+        animation: fadeInOut 2s ease-in-out;
+    }
+    
+    @keyframes fadeInOut {
+        0%, 100% { opacity: 0; }
+        50% { opacity: 1; }
+    }
+    
+    /* Mejoras responsive */
+    @media (max-width: 768px) {
+        .form-section {
+            padding: 1rem;
+        }
+        
+        .glass-card {
+            margin: 0.5rem;
+            padding: 1rem !important;
+        }
+        
+        .upload-zone {
+            padding: 2rem 1rem !important;
+        }
+    }
+    
+    /* Estados de formulario */
+    .form-submitting {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+    
+    .form-submitting * {
+        cursor: not-allowed !important;
+    }
+    
+    /* Indicador de progreso mejorado */
+    #progress-bar {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    #progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-image: linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, 0.2) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.2) 50%,
+            rgba(255, 255, 255, 0.2) 75%,
+            transparent 75%,
+            transparent
+        );
+        background-size: 50px 50px;
+        animation: moveStripes 2s linear infinite;
+    }
+    
+    @keyframes moveStripes {
+        0% {
+            background-position: 0 0;
+        }
+        100% {
+            background-position: 50px 50px;
+        }
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Variables
+    // Variables principales
     const form = document.getElementById('cuenta-form');
     const progressBar = document.getElementById('progress-bar');
     const progressText = document.getElementById('progress-text');
@@ -376,102 +591,428 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadZone = document.getElementById('upload-zone');
     const fileList = document.getElementById('file-list');
     const selectedFiles = document.getElementById('selected-files');
+    const submitBtn = document.getElementById('submit-btn');
+    const draftBtn = document.getElementById('draft-btn');
+    const modal = document.getElementById('confirmation-modal');
     
-    // Actualizar progreso del formulario
-    function updateProgress() {
-        const formData = new FormData(form);
-        const totalFields = 4; // Campos requeridos principales
-        let filledFields = 0;
+    // Estado del formulario
+    let formState = {
+        isSubmitting: false,
+        isDraft: false,
+        hasUnsavedChanges: false
+    };
+    
+    // Sistema de notificaciones toast
+    function showToast(message, type = 'success', duration = 3000) {
+        const toast = document.createElement('div');
+        const icons = {
+            success: 'fas fa-check-circle text-green-500',
+            error: 'fas fa-exclamation-circle text-red-500',
+            warning: 'fas fa-exclamation-triangle text-yellow-500',
+            info: 'fas fa-info-circle text-blue-500'
+        };
         
-        if (formData.get('fecha_emision')) filledFields++;
-        if (formData.get('proyecto_servicio')) filledFields++;
-        if (formData.get('valor') && parseFloat(formData.get('valor')) > 0) filledFields++;
-        if (fileInput.files.length > 0) filledFields++;
+        const colors = {
+            success: 'bg-green-50 border-green-200',
+            error: 'bg-red-50 border-red-200',
+            warning: 'bg-yellow-50 border-yellow-200',
+            info: 'bg-blue-50 border-blue-200'
+        };
         
-        const percentage = Math.round((filledFields / totalFields) * 100);
-        progressBar.style.width = percentage + '%';
-        progressText.textContent = percentage + '% completado';
+        toast.className = `glass-card p-4 mb-2 border-l-4 ${colors[type]} transform translate-x-full transition-all duration-300 ease-out shadow-lg`;
+        toast.innerHTML = `
+            <div class="flex items-center">
+                <i class="${icons[type]} mr-3 text-lg"></i>
+                <p class="text-sm font-medium text-gray-800">${message}</p>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        document.getElementById('toast-container').appendChild(toast);
+        
+        // Animación de entrada
+        setTimeout(() => {
+            toast.classList.remove('translate-x-full');
+        }, 100);
+        
+        // Auto-remover
+        if (duration > 0) {
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
     }
     
-    // Actualizar resumen financiero
+    // Validación en tiempo real
+    function validateField(field) {
+        const value = field.value.trim();
+        const isValid = field.checkValidity();
+        const errorElement = field.parentElement.querySelector('.field-error');
+        
+        // Remover error anterior
+        if (errorElement) {
+            errorElement.remove();
+        }
+        
+        // Resetear estilos
+        field.classList.remove('border-red-300', 'border-green-300');
+        
+        if (value && isValid) {
+            field.classList.add('border-green-300');
+            return true;
+        } else if (value && !isValid) {
+            field.classList.add('border-red-300');
+            showFieldError(field, getValidationMessage(field));
+            return false;
+        }
+        
+        return true;
+    }
+    
+    function showFieldError(field, message) {
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'field-error text-red-500 text-sm flex items-center mt-1 animate-pulse';
+        errorDiv.innerHTML = `<i class="fas fa-exclamation-triangle mr-1"></i>${message}`;
+        field.parentElement.appendChild(errorDiv);
+    }
+    
+    function getValidationMessage(field) {
+        const fieldName = field.name;
+        const value = field.value;
+        
+        switch (fieldName) {
+            case 'proyecto_servicio':
+                return value.length < 10 ? 'El nombre del proyecto debe tener al menos 10 caracteres' : '';
+            case 'valor':
+                return parseFloat(value) <= 0 ? 'El valor debe ser mayor a cero' : '';
+            case 'fecha_emision':
+                const today = new Date();
+                const inputDate = new Date(value);
+                return inputDate > today ? 'La fecha no puede ser futura' : '';
+            default:
+                return 'Campo requerido';
+        }
+    }
+    
+    // Actualizar progreso del formulario con animación
+    function updateProgress() {
+        const requiredFields = ['fecha_emision', 'proyecto_servicio', 'valor'];
+        let filledFields = 0;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.querySelector(`[name="${fieldName}"]`);
+            if (field && field.value.trim() && field.checkValidity()) {
+                filledFields++;
+            }
+        });
+        
+        // Bonus por archivos
+        if (fileInput.files.length > 0) filledFields += 0.5;
+        
+        const totalFields = requiredFields.length + 0.5;
+        const percentage = Math.round((filledFields / totalFields) * 100);
+        
+        // Animación suave del progreso
+        progressBar.style.width = percentage + '%';
+        progressText.textContent = percentage + '% completado';
+        
+        // Cambiar color según progreso
+        if (percentage >= 90) {
+            progressBar.className = progressBar.className.replace(/from-\w+-500 to-\w+-500/, 'from-green-500 to-emerald-500');
+        } else if (percentage >= 60) {
+            progressBar.className = progressBar.className.replace(/from-\w+-500 to-\w+-500/, 'from-blue-500 to-indigo-500');
+        } else {
+            progressBar.className = progressBar.className.replace(/from-\w+-500 to-\w+-500/, 'from-yellow-500 to-orange-500');
+        }
+        
+        // Habilitar/deshabilitar botón de envío
+        const isComplete = percentage >= 75;
+        submitBtn.disabled = !isComplete;
+        
+        if (isComplete) {
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            submitBtn.classList.add('hover:shadow-xl', 'transform', 'hover:-translate-y-1');
+        } else {
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            submitBtn.classList.remove('hover:shadow-xl', 'transform', 'hover:-translate-y-1');
+        }
+        
+        return percentage;
+    }
+    
+    // Actualizar resumen financiero con animación
     function updateFinancialSummary() {
         const valor = parseFloat(valorInput.value) || 0;
         const descuentos = parseFloat(descuentosInput.value) || 0;
-        const total = valor - descuentos;
+        const total = Math.max(0, valor - descuentos);
         
-        document.getElementById('resumen-base').textContent = '$' + valor.toLocaleString('es-CO', {minimumFractionDigits: 2});
-        document.getElementById('resumen-descuentos').textContent = '$' + descuentos.toLocaleString('es-CO', {minimumFractionDigits: 2});
-        document.getElementById('resumen-total').textContent = '$' + total.toLocaleString('es-CO', {minimumFractionDigits: 2});
+        // Formatear moneda colombiana
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0
+            }).format(amount);
+        };
+        
+        // Actualizar con animación
+        animateValue(document.getElementById('resumen-base'), formatCurrency(valor));
+        animateValue(document.getElementById('resumen-descuentos'), formatCurrency(descuentos));
+        animateValue(document.getElementById('resumen-total'), formatCurrency(total));
+        
+        // Validar descuentos no mayores al valor
+        if (descuentos > valor && valor > 0) {
+            showToast('Los descuentos no pueden ser mayores al valor base', 'warning');
+            descuentosInput.value = valor;
+        }
     }
     
-    // Gestión de archivos
+    // Animar valores numéricos
+    function animateValue(element, newValue) {
+        element.style.transform = 'scale(1.1)';
+        element.style.transition = 'all 0.2s ease';
+        
+        setTimeout(() => {
+            element.textContent = newValue;
+            element.style.transform = 'scale(1)';
+        }, 100);
+    }
+    
+    // Gestión avanzada de archivos
     function handleFiles(files) {
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png'];
+        const validFiles = [];
+        
+        Array.from(files).forEach(file => {
+            if (file.size > maxSize) {
+                showToast(`El archivo "${file.name}" es muy grande (máximo 10MB)`, 'error');
+                return;
+            }
+            
+            if (!allowedTypes.includes(file.type)) {
+                showToast(`Tipo de archivo no permitido: "${file.name}"`, 'error');
+                return;
+            }
+            
+            validFiles.push(file);
+        });
+        
+        if (validFiles.length === 0) {
+            fileList.classList.add('hidden');
+            return;
+        }
+        
+        displayFiles(validFiles);
+        showToast(`${validFiles.length} archivo(s) agregado(s) correctamente`, 'success');
+    }
+    
+    function displayFiles(files) {
         selectedFiles.innerHTML = '';
         fileList.classList.remove('hidden');
         
-        Array.from(files).forEach((file, index) => {
+        files.forEach((file, index) => {
             const fileItem = document.createElement('div');
-            fileItem.className = 'file-item flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200';
+            fileItem.className = 'file-item flex items-center justify-between p-4 glass-card mb-2 hover:shadow-md transition-all duration-200';
+            
+            const fileIcon = getFileIcon(file.type);
+            const fileSize = (file.size / 1024 / 1024).toFixed(2);
+            
             fileItem.innerHTML = `
                 <div class="flex items-center space-x-3">
-                    <i class="fas fa-file text-blue-500"></i>
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <i class="${fileIcon} text-blue-600"></i>
+                    </div>
                     <div>
-                        <p class="text-sm font-medium text-gray-800">${file.name}</p>
-                        <p class="text-xs text-gray-500">${(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        <p class="text-sm font-medium text-gray-800 truncate max-w-xs">${file.name}</p>
+                        <p class="text-xs text-gray-500">${fileSize} MB</p>
                     </div>
                 </div>
-                <button type="button" onclick="removeFile(${index})" class="text-red-500 hover:text-red-700 transition-colors duration-200">
-                    <i class="fas fa-times"></i>
+                <button type="button" 
+                        onclick="removeFile(${index})" 
+                        class="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all duration-200">
+                    <i class="fas fa-trash-alt"></i>
                 </button>
             `;
+            
             selectedFiles.appendChild(fileItem);
         });
     }
     
-    // Event listeners
-    form.addEventListener('input', updateProgress);
-    valorInput.addEventListener('input', updateFinancialSummary);
-    descuentosInput.addEventListener('input', updateFinancialSummary);
+    function getFileIcon(fileType) {
+        const iconMap = {
+            'application/pdf': 'fas fa-file-pdf',
+            'application/msword': 'fas fa-file-word',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'fas fa-file-word',
+            'image/jpeg': 'fas fa-file-image',
+            'image/png': 'fas fa-file-image'
+        };
+        return iconMap[fileType] || 'fas fa-file';
+    }
+    
+    // Event listeners mejorados
+    form.addEventListener('input', (e) => {
+        formState.hasUnsavedChanges = true;
+        validateField(e.target);
+        updateProgress();
+        if (e.target === valorInput || e.target === descuentosInput) {
+            updateFinancialSummary();
+        }
+    });
+    
+    // Auto-guardado periódico (cada 30 segundos)
+    let autoSaveInterval = setInterval(() => {
+        if (formState.hasUnsavedChanges && !formState.isSubmitting) {
+            saveDraft();
+        }
+    }, 30000);
+    
+    function saveDraft() {
+        const formData = new FormData(form);
+        localStorage.setItem('cuentaCobro_draft', JSON.stringify({
+            fecha_emision: formData.get('fecha_emision'),
+            proyecto_servicio: formData.get('proyecto_servicio'),
+            descripcion: formData.get('descripcion'),
+            valor: formData.get('valor'),
+            descuentos: formData.get('descuentos'),
+            timestamp: Date.now()
+        }));
+        formState.hasUnsavedChanges = false;
+        showToast('Borrador guardado automáticamente', 'info', 2000);
+    }
+    
+    // Cargar borrador al iniciar
+    function loadDraft() {
+        const draft = localStorage.getItem('cuentaCobro_draft');
+        if (draft) {
+            const data = JSON.parse(draft);
+            const hoursPassed = (Date.now() - data.timestamp) / (1000 * 60 * 60);
+            
+            if (hoursPassed < 24) { // Borrador válido por 24 horas
+                if (confirm('Se encontró un borrador guardado. ¿Desea cargarlo?')) {
+                    Object.keys(data).forEach(key => {
+                        if (key !== 'timestamp') {
+                            const field = document.querySelector(`[name="${key}"]`);
+                            if (field && data[key]) {
+                                field.value = data[key];
+                            }
+                        }
+                    });
+                    showToast('Borrador cargado correctamente', 'success');
+                    updateProgress();
+                    updateFinancialSummary();
+                }
+            } else {
+                localStorage.removeItem('cuentaCobro_draft');
+            }
+        }
+    }
+    
+    // Manejo del envío del formulario
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (formState.isSubmitting) return;
+        
+        // Validación final
+        const isValid = validateForm();
+        if (!isValid) {
+            showToast('Por favor corrija los errores antes de continuar', 'error');
+            return;
+        }
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modal.querySelector('.glass-card').style.transform = 'scale(1)';
+        }, 50);
+    });
+    
+    function validateForm() {
+        let isValid = true;
+        const requiredFields = form.querySelectorAll('[required]');
+        
+        requiredFields.forEach(field => {
+            if (!validateField(field)) {
+                isValid = false;
+            }
+        });
+        
+        return isValid;
+    }
+    
+    // Drag and drop mejorado
+    uploadZone.addEventListener('click', () => fileInput.click());
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        uploadZone.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        uploadZone.classList.add('upload-dragover');
+    }
+    
+    function unhighlight() {
+        uploadZone.classList.remove('upload-dragover');
+    }
+    
+    uploadZone.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        fileInput.files = files;
+        handleFiles(files);
+        updateProgress();
+    }
     
     fileInput.addEventListener('change', function() {
         handleFiles(this.files);
         updateProgress();
     });
     
-    // Drag and drop
-    uploadZone.addEventListener('click', () => fileInput.click());
-    
-    uploadZone.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        this.classList.add('upload-dragover');
+    // Botón de borrador
+    draftBtn.addEventListener('click', function() {
+        saveDraft();
+        showToast('Borrador guardado correctamente', 'success');
     });
     
-    uploadZone.addEventListener('dragleave', function(e) {
-        e.preventDefault();
-        this.classList.remove('upload-dragover');
+    // Advertencia antes de salir
+    window.addEventListener('beforeunload', function(e) {
+        if (formState.hasUnsavedChanges && !formState.isSubmitting) {
+            e.preventDefault();
+            e.returnValue = '';
+        }
     });
     
-    uploadZone.addEventListener('drop', function(e) {
-        e.preventDefault();
-        this.classList.remove('upload-dragover');
-        const files = e.dataTransfer.files;
-        fileInput.files = files;
-        handleFiles(files);
-        updateProgress();
-    });
-    
-    // Confirmación de envío
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        document.getElementById('confirmation-modal').classList.remove('hidden');
-    });
-    
-    // Inicializar
+    // Inicialización
+    loadDraft();
     updateFinancialSummary();
     updateProgress();
+    
+    // Limpiar intervalo al salir
+    window.addEventListener('unload', () => {
+        clearInterval(autoSaveInterval);
+    });
 });
 
-// Función para remover archivo
+// Funciones globales
 function removeFile(index) {
     const fileInput = document.getElementById('documentos');
     const dt = new DataTransfer();
@@ -485,17 +1026,38 @@ function removeFile(index) {
     if (files.length === 0) {
         document.getElementById('file-list').classList.add('hidden');
     } else {
-        handleFiles(fileInput.files);
+        // Re-renderizar archivos
+        const event = new Event('change');
+        fileInput.dispatchEvent(event);
     }
+    
+    // Actualizar progreso
+    document.dispatchEvent(new Event('DOMContentLoaded'));
 }
 
-// Funciones del modal
 function closeModal() {
-    document.getElementById('confirmation-modal').classList.add('hidden');
+    const modal = document.getElementById('confirmation-modal');
+    modal.style.opacity = '0';
+    modal.querySelector('.glass-card').style.transform = 'scale(0.95)';
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 function confirmSubmit() {
-    document.getElementById('cuenta-form').submit();
+    const form = document.getElementById('cuenta-form');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    // Cambiar estado del botón
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creando...';
+    
+    // Limpiar borrador
+    localStorage.removeItem('cuentaCobro_draft');
+    
+    // Enviar formulario
+    form.submit();
 }
 </script>
 @endpush
