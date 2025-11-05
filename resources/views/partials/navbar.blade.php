@@ -1,100 +1,280 @@
 @if (!request()->routeIs('login'))
-<nav class="navbar navbar-expand-lg bg-primary w-100 p-0 m-0 border-0 custom-navbar" style="width: 100vw; min-height: 56px;">
-    <div class="container-fluid p-0 m-0">
-        <div class="d-flex align-items-center w-100">
-            <a class="navbar-brand text-light fw-bold ms-3" href="#">Cuentas de Cobro</a>
-            <button class="navbar-toggler text-light border-0" type="button" data-bs-toggle="collapse"
-                data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false"
-                aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto ms-lg-4">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle text-light" href="#" id="cuentasDropdown" role="button"
-                           data-bs-toggle="dropdown" aria-expanded="false">
-                            Cuentas de Cobro
-                        </a>
-                        <ul class="dropdown-menu" aria-labelledby="cuentasDropdown">
-                            <li>
-                                <a class="dropdown-item" href="{{ route('cuentas-cobro.mostrar') }}">
-                                    Ver cuentas de cobro
+<!-- Navbar moderno con glassmorphism y animaciones suaves -->
+<nav class="fixed top-0 left-0 right-0 z-40 transition-all duration-300" id="modern-navbar">
+    <div class="glass-card mx-4 mt-4 rounded-2xl">
+        <div class="px-6 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo y brand con animación -->
+                <div class="flex items-center space-x-3">
+                    <div class="gradient-primary p-3 rounded-xl shadow-lg">
+                        <i class="fas fa-file-invoice-dollar text-white text-xl"></i>
+                    </div>
+                    <div class="hidden md:block">
+                        <h1 class="text-xl font-bold text-gray-800 tracking-tight">CuentasCobro</h1>
+                        <p class="text-sm text-gray-500 -mt-1">Sistema de Gestión</p>
+                    </div>
+                </div>
+                
+                <!-- Navigation links - versión desktop -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <!-- Dropdown de Cuentas de Cobro con diseño moderno -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-file-alt text-sm"></i>
+                            <span>Cuentas de Cobro</span>
+                            <i class="fas fa-chevron-down text-xs transition-transform duration-300 group-hover:rotate-180"></i>
+                        </button>
+                        
+                        <!-- Dropdown menu con glassmorphism -->
+                        <div class="absolute top-full left-0 mt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                            <div class="glass-card p-2 shadow-xl">
+                                <a href="{{ route('cuentas-cobro.mostrar') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 hover:text-primary-600 transition-all duration-200">
+                                    <i class="fas fa-eye text-primary-500"></i>
+                                    <div>
+                                        <p class="font-medium">Ver cuentas</p>
+                                        <p class="text-xs text-gray-500">Consultar existentes</p>
+                                    </div>
                                 </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item" href="{{ route('cuentas-cobro.crear') }}">
-                                    Crear cuenta de cobro
+                                <a href="{{ route('cuentas-cobro.crear') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 hover:text-primary-600 transition-all duration-200">
+                                    <i class="fas fa-plus-circle text-green-500"></i>
+                                    <div>
+                                        <p class="font-medium">Crear cuenta</p>
+                                        <p class="text-xs text-gray-500">Nueva cuenta de cobro</p>
+                                    </div>
                                 </a>
-                            </li>
-                        </ul>
-                    </li>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Links dinámicos según el rol del usuario -->
                     @if($userRole === 'alcalde')
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Reportes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Administración</a>
-                    </li>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-chart-bar text-sm"></i>
+                            <span>Reportes</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-cogs text-sm"></i>
+                            <span>Administración</span>
+                        </a>
                     @elseif($userRole === 'contratista')
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Contrato</a>
-                    </li>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-handshake text-sm"></i>
+                            <span>Contrato</span>
+                        </a>
                     @elseif($userRole === 'supervisor')
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Reportes</a>
-                    </li>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-chart-line text-sm"></i>
+                            <span>Reportes</span>
+                        </a>
                     @elseif($userRole === 'ordenador_gasto')
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Presupuesto</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Reportes Financieros</a>
-                    </li>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-calculator text-sm"></i>
+                            <span>Presupuesto</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-chart-pie text-sm"></i>
+                            <span>Reportes Financieros</span>
+                        </a>
                     @elseif($userRole === 'tesoreria')
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Procesar Pagos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Reportes Financieros</a>
-                    </li>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-credit-card text-sm"></i>
+                            <span>Procesar Pagos</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-chart-pie text-sm"></i>
+                            <span>Reportes Financieros</span>
+                        </a>
                     @elseif($userRole === 'contratacion')
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Contratos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="#">Reportes</a>
-                    </li>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-file-contract text-sm"></i>
+                            <span>Contratos</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-chart-bar text-sm"></i>
+                            <span>Reportes</span>
+                        </a>
                     @endif
-                </ul>
-                <!-- Botón de sidebar a la derecha -->
-                <button class="btn text-light ms-auto me-3" type="button" data-bs-toggle="offcanvas"
-                    data-bs-target="#sidebarMenu" aria-controls="sidebarMenu">
-                    <i class="fas fa-bars fa-lg"></i>
-                </button>
+                </div>
+                
+                <!-- User menu y mobile toggle -->
+                <div class="flex items-center space-x-4">
+                    <!-- User dropdown -->
+                    <div class="relative group">
+                        <button class="flex items-center space-x-3 px-4 py-2 rounded-xl hover:bg-white/50 transition-all duration-300">
+                            <div class="w-8 h-8 gradient-primary rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white text-sm"></i>
+                            </div>
+                            <span class="hidden md:block text-gray-700 font-medium">Perfil</span>
+                            <i class="fas fa-chevron-down text-xs text-gray-500 transition-transform duration-300 group-hover:rotate-180"></i>
+                        </button>
+                        
+                        <!-- User dropdown menu -->
+                        <div class="absolute top-full right-0 mt-2 w-56 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                            <div class="glass-card p-2 shadow-xl">
+                                <div class="px-4 py-3 border-b border-white/20">
+                                    <p class="text-sm font-medium text-gray-800">{{ Auth::user()->name ?? 'Usuario' }}</p>
+                                    <p class="text-xs text-gray-500">{{ ucfirst(str_replace('_', ' ', $userRole ?? 'Sin rol')) }}</p>
+                                </div>
+                                <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 transition-all duration-200">
+                                    <i class="fas fa-user-circle text-primary-500"></i>
+                                    <span>Mi Perfil</span>
+                                </a>
+                                <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 transition-all duration-200">
+                                    <i class="fas fa-cog text-gray-500"></i>
+                                    <span>Configuración</span>
+                                </a>
+                                <hr class="my-2 border-white/20">
+                                <form method="POST" action="{{ route('logout') }}" class="block">
+                                    @csrf
+                                    <button type="submit" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all duration-200">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                        <span>Cerrar Sesión</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile menu button -->
+                    <button class="lg:hidden p-2 rounded-xl hover:bg-white/50 transition-all duration-300" id="mobile-menu-toggle">
+                        <i class="fas fa-bars text-gray-700 text-lg"></i>
+                    </button>
+                </div>
             </div>
         </div>
+    </div>
 </nav>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="sidebarMenu" aria-labelledby="sidebarMenuLabel">
-    <div class="offcanvas-header">
-        <h5 class="offcanvas-title" id="sidebarMenuLabel">Menú</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
-    </div>
-    <div class="offcanvas-body">
-        <ul class="navbar-nav">
-            <li class="nav-item">
-                <a class="nav-link" href="#">Perfil</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">Configuración</a>
-            </li>
-            <li class="nav-item">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="nav-link btn btn-link px-0 text-start">Salir</button>
-                </form>
-            </li>
-        </ul>
+<!-- Mobile menu overlay -->
+<div class="fixed inset-0 z-50 lg:hidden opacity-0 invisible transition-all duration-300" id="mobile-menu-overlay">
+    <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
+    <div class="absolute top-0 right-0 h-full w-80 max-w-[90vw] glass-card transform translate-x-full transition-transform duration-300" id="mobile-menu">
+        <div class="p-6">
+            <!-- Header del mobile menu -->
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="gradient-primary p-2 rounded-lg">
+                        <i class="fas fa-file-invoice-dollar text-white"></i>
+                    </div>
+                    <span class="font-bold text-gray-800">CuentasCobro</span>
+                </div>
+                <button class="p-2 rounded-lg hover:bg-white/50 transition-all duration-200" id="mobile-menu-close">
+                    <i class="fas fa-times text-gray-700"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile navigation links -->
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold px-4">GESTIÓN</p>
+                    <a href="{{ route('cuentas-cobro.mostrar') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                        <i class="fas fa-eye text-primary-500"></i>
+                        <span>Ver cuentas de cobro</span>
+                    </a>
+                    <a href="{{ route('cuentas-cobro.crear') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                        <i class="fas fa-plus-circle text-green-500"></i>
+                        <span>Crear cuenta de cobro</span>
+                    </a>
+                </div>
+                
+                @if($userRole)
+                <div class="space-y-2">
+                    <p class="text-xs uppercase tracking-wider text-gray-500 font-semibold px-4">FUNCIONES DE {{ strtoupper(str_replace('_', ' ', $userRole)) }}</p>
+                    @if($userRole === 'alcalde')
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-chart-bar text-blue-500"></i>
+                            <span>Reportes</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-cogs text-gray-500"></i>
+                            <span>Administración</span>
+                        </a>
+                    @elseif($userRole === 'contratista')
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-handshake text-green-500"></i>
+                            <span>Contrato</span>
+                        </a>
+                    @elseif($userRole === 'supervisor')
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-chart-line text-blue-500"></i>
+                            <span>Reportes</span>
+                        </a>
+                    @elseif($userRole === 'ordenador_gasto')
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-calculator text-yellow-500"></i>
+                            <span>Presupuesto</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-chart-pie text-purple-500"></i>
+                            <span>Reportes Financieros</span>
+                        </a>
+                    @elseif($userRole === 'tesoreria')
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-credit-card text-green-500"></i>
+                            <span>Procesar Pagos</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-chart-pie text-purple-500"></i>
+                            <span>Reportes Financieros</span>
+                        </a>
+                    @elseif($userRole === 'contratacion')
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-file-contract text-blue-500"></i>
+                            <span>Contratos</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-chart-bar text-blue-500"></i>
+                            <span>Reportes</span>
+                        </a>
+                    @endif
+                </div>
+                @endif
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- Script para funcionalidad del mobile menu -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+    const mobileMenuOverlay = document.getElementById('mobile-menu-overlay');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const mobileMenuClose = document.getElementById('mobile-menu-close');
+    
+    // Abrir mobile menu
+    mobileMenuToggle?.addEventListener('click', function() {
+        mobileMenuOverlay.classList.remove('opacity-0', 'invisible');
+        mobileMenu.classList.remove('translate-x-full');
+    });
+    
+    // Cerrar mobile menu
+    function closeMobileMenu() {
+        mobileMenuOverlay.classList.add('opacity-0', 'invisible');
+        mobileMenu.classList.add('translate-x-full');
+    }
+    
+    mobileMenuClose?.addEventListener('click', closeMobileMenu);
+    mobileMenuOverlay?.addEventListener('click', function(e) {
+        if (e.target === mobileMenuOverlay) {
+            closeMobileMenu();
+        }
+    });
+    
+    // Navbar scroll effect
+    const navbar = document.getElementById('modern-navbar');
+    let lastScrollY = window.scrollY;
+    
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > lastScrollY && window.scrollY > 100) {
+            // Scrolling down
+            navbar.style.transform = 'translateY(-100%)';
+        } else {
+            // Scrolling up
+            navbar.style.transform = 'translateY(0)';
+        }
+        lastScrollY = window.scrollY;
+    });
+});
+</script>
 @endif
