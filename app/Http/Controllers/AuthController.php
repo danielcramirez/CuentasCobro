@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Roles;
+use App\Models\CuentaCobro;
 
 class AuthController extends Controller
 {
@@ -88,30 +89,35 @@ class AuthController extends Controller
         if ($user->hasRole('supervisor')) {
             $dashboardLink = 'dashboard.supervisor';
             $dashboardData = array_merge($dashboardData, [
-                'pendingReviews' => 0, // Aquí irían las cuentas de cobro pendientes
-                'approvedToday' => 0,
-                'rejectedToday' => 0
+                'pendingReviews' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
+                'approvedToday' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+                    ->whereDate('updated_at', today())->count(),
+                'rejectedToday' => CuentaCobro::where('estado', 'rechazado')
+                    ->whereDate('updated_at', today())->count(),
+                'totalCuentasCobro' => CuentaCobro::count(),
+                'recentCuentasCobro' => CuentaCobro::with('user')->latest()->limit(5)->get()
             ]);
         }
 
         // Datos específicos para contratista
         if ($user->hasRole('contratista')) {
-            $dashboardLink = 'dashboard.contratista';
-            $dashboardData = array_merge($dashboardData, [
-                'myCuentasCobro' => 0, // Aquí irían sus cuentas de cobro
-                'pendingApproval' => 0,
-                'approved' => 0,
-                'rejected' => 0
-            ]);
+            // Redirigir a dashboard específico de contratista
+            return redirect()->route('contratista.dashboard');
         }
 
         // Datos específicos para tesorería
         if ($user->hasRole('tesoreria')) {
             $dashboardLink = 'dashboard.other_roles';
             $dashboardData = array_merge($dashboardData, [
-                'pendingPayments' => 0,
-                'paymentsToday' => 0,
-                'totalPaid' => 0
+                'pendingPayments' => CuentaCobro::where('estado', 'aprobado')->count(),
+                'paymentsToday' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+                    ->whereDate('updated_at', today())->count(),
+                'totalPaid' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor'),
+                'monthlyPayments' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+                    ->whereMonth('updated_at', now()->month)->sum('valor'),
+                'recentPayments' => CuentaCobro::with('user')
+                    ->where('estado', CuentaCobro::ESTADO_PAGADO)
+                    ->latest()->limit(5)->get()
             ]);
         }
 
@@ -119,9 +125,15 @@ class AuthController extends Controller
         if ($user->hasRole('ordenador_gasto')) {
             $dashboardLink = 'dashboard.other_roles';
             $dashboardData = array_merge($dashboardData, [
-                'pendingAuthorizations' => 0,
-                'authorizedToday' => 0,
-                'budgetStatus' => 0
+                'pendingAuthorizations' => CuentaCobro::where('estado', 'revision')->count(),
+                'authorizedToday' => CuentaCobro::where('estado', 'aprobado')
+                    ->whereDate('updated_at', today())->count(),
+                'budgetStatus' => CuentaCobro::where('estado', 'aprobado')->sum('valor'),
+                'monthlyBudget' => CuentaCobro::where('estado', 'aprobado')
+                    ->whereMonth('updated_at', now()->month)->sum('valor'),
+                'recentAuthorizations' => CuentaCobro::with('user')
+                    ->whereIn('estado', ['revision', 'aprobado'])
+                    ->latest()->limit(5)->get()
             ]);
         }
 
@@ -129,9 +141,16 @@ class AuthController extends Controller
         if ($user->hasRole('contratacion')) {
             $dashboardLink = 'dashboard.other_roles';
             $dashboardData = array_merge($dashboardData, [
-                'activeContracts' => 0,
-                'pendingContracts' => 0,
-                'totalContractors' => 0
+                'activeContracts' => User::whereHas('role', function($query) {
+                    $query->where('name', 'contratista');
+                })->count(),
+                'pendingContracts' => CuentaCobro::where('estado', CuentaCobro::ESTADO_BORRADOR)->count(),
+                'totalContractors' => User::whereHas('role', function($query) {
+                    $query->where('name', 'contratista');
+                })->count(),
+                'monthlyContracts' => CuentaCobro::whereMonth('created_at', now()->month)->count(),
+                'recentContracts' => CuentaCobro::with('user')
+                    ->latest()->limit(5)->get()
             ]);
         }
 

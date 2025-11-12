@@ -44,9 +44,67 @@ class CuentaCobro extends Model
     }
 
     /**
-     * Ejemplo de constantes para estados (ajusta según tu migración)
+     * Constantes para estados
      */
     public const ESTADO_BORRADOR = 'borrador';
     public const ESTADO_PENDIENTE = 'pendiente';
+    public const ESTADO_REVISION = 'revision';
+    public const ESTADO_APROBADO = 'aprobado';
+    public const ESTADO_RECHAZADO = 'rechazado';
     public const ESTADO_PAGADO = 'pagado';
+
+    /**
+     * Obtener todos los estados disponibles
+     */
+    public static function getEstados()
+    {
+        return [
+            self::ESTADO_BORRADOR => 'Borrador',
+            self::ESTADO_PENDIENTE => 'Pendiente',
+            self::ESTADO_REVISION => 'En Revisión',
+            self::ESTADO_APROBADO => 'Aprobado',
+            self::ESTADO_RECHAZADO => 'Rechazado',
+            self::ESTADO_PAGADO => 'Pagado'
+        ];
+    }
+
+    /**
+     * Obtener el estado formateado
+     */
+    public function getEstadoFormateadoAttribute()
+    {
+        return self::getEstados()[$this->estado] ?? 'Desconocido';
+    }
+
+    /**
+     * Scope para cuentas de cobro pendientes
+     */
+    public function scopePendientes($query)
+    {
+        return $query->where('estado', self::ESTADO_PENDIENTE);
+    }
+
+    /**
+     * Scope para cuentas de cobro aprobadas
+     */
+    public function scopeAprobadas($query)
+    {
+        return $query->where('estado', self::ESTADO_APROBADO);
+    }
+
+    /**
+     * Scope para cuentas de cobro pagadas
+     */
+    public function scopePagadas($query)
+    {
+        return $query->where('estado', self::ESTADO_PAGADO);
+    }
+
+    /**
+     * Verificar si la cuenta está en estado editable
+     */
+    public function esEditable()
+    {
+        return in_array($this->estado, [self::ESTADO_BORRADOR, self::ESTADO_RECHAZADO]);
+    }
 }
