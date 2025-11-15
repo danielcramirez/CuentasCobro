@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CrearUsuario;
 use App\Http\Controllers\RolControler;
 use App\Http\Controllers\CuentaCobroController;
+use App\Http\Controllers\ContratistaDashboardController;
 
 // Ruta raíz redirige al login
 Route::get('/', function () {
@@ -26,6 +27,12 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 
+    // Dashboard específico para contratista
+    Route::middleware(['check.role:contratista'])->group(function () {
+        Route::get('/contratista/dashboard', [ContratistaDashboardController::class, 'index'])->name('contratista.dashboard');
+        Route::get('/api/contratista/dashboard-data', [ContratistaDashboardController::class, 'getDashboardData'])->name('api.contratista.dashboard');
+    });
+
     // Rutas de Cuentas de Cobro
     Route::resource('cuentas-cobro', CuentaCobroController::class)
         ->except(['show'])
@@ -37,7 +44,11 @@ Route::middleware(['auth'])->group(function () {
         'destroy' => 'cuentas-cobro.destroy'
     ]);
 
-    //Route::get('/cuentas-cobro', [CuentaCobroController::class, 'index'])->name('cuentas-cobro.mostrar');
+    // Rutas adicionales para Cuentas de Cobro
+    Route::prefix('cuentas-cobro')->name('cuentas-cobro.')->group(function () {
+        Route::post('/{id}/cambiar-estado', [CuentaCobroController::class, 'cambiarEstado'])->name('cambiar-estado');
+        Route::get('/estadisticas', [CuentaCobroController::class, 'estadisticas'])->name('estadisticas');
+    });
 
 
     
@@ -85,27 +96,5 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
-// Rutas que requieren roles específicos (ejemplos para futuro uso)
-Route::middleware(['auth'])->group(function () {
-    
-    // Solo para contratistas
-    Route::middleware(['check.role:contratista'])->prefix('contratista')->name('contratista.')->group(function () {
-        Route::get('/dashboard', function() {
-            return view('contratista.dashboard');
-        })->name('dashboard');
-    });
-    
-    // Solo para supervisores
-    Route::middleware(['check.role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
-        Route::get('/dashboard', function() {
-            return view('supervisor.dashboard');
-        })->name('dashboard');
-    });
-    
-    // Solo para roles administrativos (alcalde, ordenador del gasto)
-    Route::middleware(['check.role:alcalde,ordenador_gasto'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/reports', function() {
-            return view('admin.reports');
-        })->name('reports');
-    });
-});
+// Rutas adicionales que requieren roles específicos (placeholders para futuro uso)
+// NOTA: Las rutas principales de dashboard están definidas arriba usando controladores

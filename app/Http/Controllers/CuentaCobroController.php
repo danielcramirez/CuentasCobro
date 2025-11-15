@@ -64,6 +64,7 @@ class CuentaCobroController extends Controller
         $cuenta->fecha_emision = $request->input('fecha_emision');
         $cuenta->proyecto_servicio = $request->input('proyecto_servicio');
         $cuenta->valor = $request->input('valor');
+        $cuenta->estado = CuentaCobro::ESTADO_BORRADOR; // Estado inicial
         $cuenta->save();
 
         return redirect()->route('cuentas-cobro.mostrar')->with('success', 'Cuenta de cobro creada exitosamente.');
@@ -77,19 +78,52 @@ class CuentaCobroController extends Controller
 
         $cuenta = $query->findOrFail($id);
 
+        $cuenta = CuentaCobro::findOrFail($id);
+        
+        // Verificar permisos
+        $user = Auth::user();
+        if ($user->hasRole('contratista') && $cuenta->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para editar esta cuenta de cobro.');
+        }
+        
+        // Verificar si la cuenta es editable
+        if (!$cuenta->esEditable()) {
+            return redirect()->route('cuentas-cobro.mostrar')
+                ->with('error', 'Esta cuenta de cobro no puede ser editada en su estado actual.');
+        }
+        
         return view('cuentasCobro.editarCuenta', compact('cuenta'));
     }
 
     public function update(Request $request, $id)
     {
+        $user = Auth::user();
+        $cuenta = CuentaCobro::findOrFail($id);
+        
+        // Verificar permisos
+        if ($user->hasRole('contratista') && $cuenta->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para editar esta cuenta de cobro.');
+        }
+        
+        // Validar estado según rol
+        $estadosPermitidos = ['borrador', 'pendiente'];
+        if ($user->hasRole('supervisor')) {
+            $estadosPermitidos = array_merge($estadosPermitidos, ['revision', 'aprobado', 'rechazado']);
+        }
+        if ($user->hasRole('ordenador_gasto')) {
+            $estadosPermitidos = array_merge($estadosPermitidos, ['aprobado', 'rechazado']);
+        }
+        if ($user->hasRole('tesoreria')) {
+            $estadosPermitidos = array_merge($estadosPermitidos, ['pagado']);
+        }
+        
         $request->validate([
             'fecha_emision' => 'required|date',
             'proyecto_servicio' => 'required|string|max:255',
             'valor' => 'required|numeric|min:0',
-            'estado' => 'required|string|in:borrador,pendiente,pagado',
+            'estado' => 'required|string|in:' . implode(',', $estadosPermitidos),
         ]);
 
-        $cuenta = CuentaCobro::findOrFail($id);
         $cuenta->fecha_emision = $request->input('fecha_emision');
         $cuenta->proyecto_servicio = $request->input('proyecto_servicio');
         $cuenta->valor = $request->input('valor');
@@ -102,9 +136,98 @@ class CuentaCobroController extends Controller
     public function destroy(CuentaCobro $cuenta, $id)
     {
         $cuenta = CuentaCobro::findOrFail($id);
+        
+        // Verificar permisos
+        $user = Auth::user();
+        if ($user->hasRole('contratista') && $cuenta->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para eliminar esta cuenta de cobro.');
+        }
+        
+        // Solo permitir eliminar cuentas en borrador
+        if ($cuenta->estado !== CuentaCobro::ESTADO_BORRADOR) {
+            return redirect()->route('cuentas-cobro.mostrar')
+                ->with('error', 'Solo se pueden eliminar cuentas de cobro en estado borrador.');
+        }
+        
         $cuenta->delete();
-
         return redirect()->route('cuentas-cobro.mostrar')->with('success', 'Cuenta de cobro eliminada exitosamente.');
+    }
+
+    /**
+     * Cambiar estado de una cuenta de cobro (usado por AJAX)
+     */
+    public function cambiarEstado(Request $request, $id)
+    {
+        $user = Auth::user();
+        $cuenta = CuentaCobro::findOrFail($id);
+        
+        $nuevoEstado = $request->input('estado');
+        $comentario = $request->input('comentario', '');
+        
+        // Verificar permisos según rol
+        $puedeActualizar = false;
+        
+        if ($user->hasRole('contratista') && $cuenta->user_id === $user->id) {
+            // Contratista solo puede enviar a pendiente desde borrador
+            $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_BORRADOR && 
+                              $nuevoEstado === CuentaCobro::ESTADO_PENDIENTE;
+        } elseif ($user->hasRole('supervisor')) {
+            // Supervisor puede aprobar/rechazar desde pendiente
+            $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_PENDIENTE && 
+                              in_array($nuevoEstado, [CuentaCobro::ESTADO_REVISION, CuentaCobro::ESTADO_RECHAZADO]);
+        } elseif ($user->hasRole('ordenador_gasto')) {
+            // Ordenador del gasto puede aprobar desde revisión
+            $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_REVISION && 
+                              in_array($nuevoEstado, [CuentaCobro::ESTADO_APROBADO, CuentaCobro::ESTADO_RECHAZADO]);
+        } elseif ($user->hasRole('tesoreria')) {
+            // Tesorería puede marcar como pagado desde aprobado
+            $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_APROBADO && 
+                              $nuevoEstado === CuentaCobro::ESTADO_PAGADO;
+        }
+        
+        if (!$puedeActualizar) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para realizar esta acción.'
+            ], 403);
+        }
+        
+        $cuenta->estado = $nuevoEstado;
+        $cuenta->save();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Estado actualizado correctamente.',
+            'nuevo_estado' => $cuenta->estado_formateado
+        ]);
+    }
+
+    /**
+     * Obtener estadísticas para el dashboard
+     */
+    public function estadisticas()
+    {
+        $user = Auth::user();
+        $estadisticas = [];
+        
+        if ($user->hasRole('contratista')) {
+            $estadisticas = [
+                'total' => CuentaCobro::where('user_id', $user->id)->count(),
+                'borradores' => CuentaCobro::where('user_id', $user->id)->where('estado', CuentaCobro::ESTADO_BORRADOR)->count(),
+                'pendientes' => CuentaCobro::where('user_id', $user->id)->where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
+                'aprobadas' => CuentaCobro::where('user_id', $user->id)->where('estado', CuentaCobro::ESTADO_PAGADO)->count(),
+                'valor_total' => CuentaCobro::where('user_id', $user->id)->where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor')
+            ];
+        } elseif ($user->hasRole('supervisor')) {
+            $estadisticas = [
+                'pendientes_revision' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
+                'revisadas_hoy' => CuentaCobro::whereIn('estado', [CuentaCobro::ESTADO_REVISION, CuentaCobro::ESTADO_RECHAZADO])
+                    ->whereDate('updated_at', today())->count(),
+                'total_sistema' => CuentaCobro::count()
+            ];
+        }
+        
+        return response()->json($estadisticas);
     }
 
 }
