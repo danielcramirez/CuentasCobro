@@ -770,10 +770,13 @@
         createBackgroundAnimation();
     });
     
-    // Función para cerrar el toast
+    // Función para cerrar el toast y eliminarlo del DOM
     function closeToast() {
         const toast = document.getElementById('welcome-toast');
         toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            if (toast) toast.remove();
+        }, 400); // Espera la transición antes de eliminar
     }
 
     // Función para toggle del panel de notificaciones

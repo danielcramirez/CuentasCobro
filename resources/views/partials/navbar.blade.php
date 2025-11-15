@@ -5,15 +5,17 @@
         <div class="px-6 py-4">
             <div class="flex items-center justify-between">
                 <!-- Logo y brand con animación -->
+                <a href="{{ route('dashboard') }}">
                 <div class="flex items-center space-x-3">
                     <div class="gradient-primary p-3 rounded-xl shadow-lg">
                         <i class="fas fa-file-invoice-dollar text-white text-xl"></i>
                     </div>
                     <div class="hidden md:block">
-                        <h1 class="text-xl font-bold text-gray-800 tracking-tight">CuentasCobro</h1>
+                            <h1 class="text-xl font-bold text-gray-800 tracking-tight">CuentasCobro</h1>
                         <p class="text-sm text-gray-500 -mt-1">Sistema de Gestión</p>
                     </div>
                 </div>
+                </a>
                 
                 <!-- Navigation links - versión desktop -->
                 <div class="hidden lg:flex items-center space-x-8">
@@ -52,7 +54,7 @@
                             <i class="fas fa-chart-bar text-sm"></i>
                             <span>Reportes</span>
                         </a>
-                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                        <a href="{{ route('roles.index') }}" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
                             <i class="fas fa-cogs text-sm"></i>
                             <span>Administración</span>
                         </a>
