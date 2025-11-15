@@ -21,15 +21,17 @@ class RolControler extends Controller
     /**
      * Mostrar lista de todos los roles
      */
-    public function index()
+    public function index(Roles $role)
     {
         // Solo admins pueden ver todos los roles
         if (!Auth::user()->isAdmin()) {
             return redirect('/dashboard')->with('error', 'No tienes permisos para acceder a esta sección.');
         }
 
+        $user = Auth::user();
+
         // CORREGIR: usar withCount con la relación correcta
-        $roles = Roles::withCount('users')->get();
+        $roles = Roles::withCount('users')->paginate(10);
         return view('roles.index', compact('roles'));
     }
 

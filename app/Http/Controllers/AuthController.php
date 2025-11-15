@@ -10,17 +10,11 @@ use App\Models\Roles;
 
 class AuthController extends Controller
 {
-    /**
-     * Mostrar el formulario de login
-     */
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    /**
-     * Procesar el login
-     */
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -40,9 +34,6 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    /**
-     * Cerrar sesión
-     */
     public function logout(Request $request)
     {
         Auth::logout();
@@ -54,9 +45,6 @@ class AuthController extends Controller
             ->with('success', 'Has cerrado sesión exitosamente.');
     }
 
-    /**
-     * Mostrar el dashboard según el rol del usuario
-     */
     public function dashboard()
     {
         $user = Auth::user();

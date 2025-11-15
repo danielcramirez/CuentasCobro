@@ -54,6 +54,7 @@
                     </div>
 
                     <!-- Estado -->
+                    <!-- Esta parte solo debe verse para cualquier otro que no sea contratista -->
                     <div class="space-y-2">
                         <label for="estado" class="block text-sm font-semibold text-gray-700">
                             <i class="fas fa-flag mr-2 text-green-500"></i>
@@ -140,9 +141,8 @@
                     </button>
                     
                     <a 
-                        href="{{ route('cuentas-cobro.index') }}" 
-                        class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-xl hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 transition-all duration-300 transform hover:scale-105 font-semibold text-center"
-                    >
+                        href="{{ route('cuentas-cobro.mostrar') }}" 
+                        class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-xl hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 transition-all duration-300 transform hover:scale-105 font-semibold text-center">
                         <i class="fas fa-times mr-2"></i>
                         Cancelar
                     </button>
@@ -176,7 +176,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 

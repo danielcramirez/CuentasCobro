@@ -571,4 +571,3 @@ function closeDeleteModal() {
     }, 5000);
 </script>
 @endpush
-@endsection

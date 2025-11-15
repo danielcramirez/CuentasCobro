@@ -71,7 +71,12 @@ class CuentaCobroController extends Controller
 
     public function edit($id)
     {
-        
+        $query = CuentaCobro::select('cuenta_cobros.*', 'users.name as user_name')
+            ->join('users', 'users.id', '=', 'cuenta_cobros.user_id')
+            ->orderBy('fecha_emision', 'desc');
+
+        $cuenta = $query->findOrFail($id);
+
         return view('cuentasCobro.editarCuenta', compact('cuenta'));
     }
 
