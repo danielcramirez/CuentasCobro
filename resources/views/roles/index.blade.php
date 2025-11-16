@@ -3,7 +3,7 @@
 @section('title', 'Gestión de Roles - CuentasCobro')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8">
+<div class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-8 pt-32">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <!-- Header -->
@@ -93,6 +93,22 @@
                 <h3 class="text-2xl font-bold text-gray-900 mb-1">{{ $totalPermissions ?? 0 }}</h3>
                 <p class="text-gray-600 text-sm">Permisos Configurados</p>
             </div>
+
+            <div class="col-lg-3 col-md-6 mb-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="mb-0">{{ $roles->where('users_count', 0)->count() }}</h4>
+                                <small>Roles Sin Usuarios</small>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-user-times fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Search and Filters -->
@@ -125,29 +141,29 @@
                 <div class="flex items-start justify-between mb-4">
                     <div class="flex items-center">
                         <div class="w-12 h-12 bg-gradient-to-br 
-                            @if($role->nombre === 'alcalde') from-red-400 to-red-600
-                            @elseif($role->nombre === 'contratista') from-blue-400 to-blue-600
-                            @elseif($role->nombre === 'supervisor') from-green-400 to-green-600
-                            @elseif($role->nombre === 'tesoreria') from-yellow-400 to-orange-500
-                            @elseif($role->nombre === 'ordenador_gasto') from-purple-400 to-purple-600
-                            @elseif($role->nombre === 'contratacion') from-pink-400 to-pink-600
+                            @if($role->name === 'alcalde') from-red-400 to-red-600
+                            @elseif($role->name === 'contratista') from-blue-400 to-blue-600
+                            @elseif($role->name === 'supervisor') from-green-400 to-green-600
+                            @elseif($role->name === 'tesoreria') from-yellow-400 to-orange-500
+                            @elseif($role->name === 'ordenador_gasto') from-purple-400 to-purple-600
+                            @elseif($role->name === 'contratacion') from-pink-400 to-pink-600
                             @else from-gray-400 to-gray-600
                             @endif
                             rounded-full flex items-center justify-center mr-3">
                             <i class="
-                                @if($role->nombre === 'alcalde') fas fa-crown
-                                @elseif($role->nombre === 'contratista') fas fa-user-tie
-                                @elseif($role->nombre === 'supervisor') fas fa-clipboard-check
-                                @elseif($role->nombre === 'tesoreria') fas fa-coins
-                                @elseif($role->nombre === 'ordenador_gasto') fas fa-money-check-alt
-                                @elseif($role->nombre === 'contratacion') fas fa-handshake
+                                @if($role->name === 'alcalde') fas fa-crown
+                                @elseif($role->name === 'contratista') fas fa-user-tie
+                                @elseif($role->name === 'supervisor') fas fa-clipboard-check
+                                @elseif($role->name === 'tesoreria') fas fa-coins
+                                @elseif($role->name === 'ordenador_gasto') fas fa-money-check-alt
+                                @elseif($role->name === 'contratacion') fas fa-handshake
                                 @else fas fa-user
                                 @endif
                                 text-white text-xl"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-bold text-gray-900">{{ ucfirst($role->nombre) }}</h3>
-                            <p class="text-gray-600 text-sm">{{ $role->descripcion ?? 'Sin descripción' }}</p>
+                            <h3 class="text-lg font-bold text-gray-900">{{ collect(explode('_', $role->name))->map(fn($w) => ucfirst($w))->implode(' ') }}</h3>
+                            <p class="text-gray-600 text-sm">{{ $role->description ?? 'Sin descripción' }}</p>
                         </div>
                     </div>
                     
@@ -167,7 +183,7 @@
                         <p class="text-gray-600 text-xs">Usuarios</p>
                     </div>
                     <div class="text-center p-3 bg-gray-50 rounded-lg">
-                        <p class="text-2xl font-bold text-gray-900">{{ $role->permissions_count ?? 0 }}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ count($role->permissions) }}</p>
                         <p class="text-gray-600 text-xs">Permisos</p>
                     </div>
                 </div>
@@ -213,7 +229,6 @@
             </div>
             @endforelse
         </div>
-
         <!-- Pagination -->
         @if($roles->hasPages())
         <div class="mt-8 flex justify-center">
@@ -337,203 +352,6 @@ function closeDeleteModal() {
 }
 </style>
 @endsection
-                </div>
-                
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card bg-success text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4 class="mb-0">{{ $roles->sum('users_count') }}</h4>
-                                    <small>Usuarios con Rol</small>
-                                </div>
-                                <div class="align-self-center">
-                                    <i class="fas fa-user-check fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card bg-warning text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4 class="mb-0">{{ $roles->where('users_count', 0)->count() }}</h4>
-                                    <small>Roles Sin Usuarios</small>
-                                </div>
-                                <div class="align-self-center">
-                                    <i class="fas fa-user-times fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-lg-3 col-md-6 mb-3">
-                    <div class="card bg-info text-white">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between">
-                                <div>
-                                    <h4 class="mb-0">6</h4>
-                                    <small>Roles del Sistema</small>
-                                </div>
-                                <div class="align-self-center">
-                                    <i class="fas fa-cogs fa-2x"></i>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tabla de roles -->
-            <div class="card shadow">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">
-                        <i class="fas fa-list me-2"></i>
-                        Lista de Roles
-                    </h5>
-                </div>
-                <div class="card-body">
-                    @if($roles->count() > 0)
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th><i class="fas fa-hashtag me-1"></i>ID</th>
-                                    <th><i class="fas fa-tag me-1"></i>Nombre</th>
-                                    <th><i class="fas fa-info-circle me-1"></i>Descripción</th>
-                                    <th><i class="fas fa-users me-1"></i>Usuarios</th>
-                                    <th><i class="fas fa-key me-1"></i>Permisos</th>
-                                    <th><i class="fas fa-calendar me-1"></i>Creado</th>
-                                    @if(Auth::user()->isAdmin())
-                                    <th class="text-center"><i class="fas fa-cogs me-1"></i>Acciones</th>
-                                    @endif
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($roles as $role)
-                                <tr>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ $role->id }}</span>
-                                    </td>
-                                    <td>
-                                        <strong class="text-capitalize">
-                                            @switch($role->name)
-                                                @case('contratista')
-                                                    <i class="fas fa-user-tie text-primary me-1"></i>
-                                                    @break
-                                                @case('supervisor')
-                                                    <i class="fas fa-user-check text-success me-1"></i>
-                                                    @break
-                                                @case('alcalde')
-                                                    <i class="fas fa-crown text-warning me-1"></i>
-                                                    @break
-                                                @case('ordenador_gasto')
-                                                    <i class="fas fa-money-check-alt text-info me-1"></i>
-                                                    @break
-                                                @case('tesoreria')
-                                                    <i class="fas fa-coins text-success me-1"></i>
-                                                    @break
-                                                @case('contratacion')
-                                                    <i class="fas fa-handshake text-primary me-1"></i>
-                                                    @break
-                                                @default
-                                                    <i class="fas fa-user me-1"></i>
-                                            @endswitch
-                                            {{ ucfirst(str_replace('_', ' ', $role->name)) }}
-                                        </strong>
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">{{ $role->description }}</small>
-                                    </td>
-                                    <td>
-                                        @if($role->users_count > 0)
-                                            <span class="badge bg-success">{{ $role->users_count }} usuarios</span>
-                                        @else
-                                            <span class="badge bg-secondary">Sin usuarios</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if($role->permissions && count($role->permissions) > 0)
-                                            <span class="badge bg-info">{{ count($role->permissions) }} permisos</span>
-                                            <button class="btn btn-sm btn-outline-info ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#permissions-{{ $role->id }}">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                        @else
-                                            <span class="badge bg-secondary">Sin permisos</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <small class="text-muted">{{ $role->created_at->format('d/m/Y') }}</small>
-                                    </td>
-                                    @if(Auth::user()->isAdmin())
-                                    <td class="text-center">
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{{ route('roles.show', $role->id) }}" class="btn btn-outline-info" title="Ver detalles">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            @if(Auth::user()->hasRole('alcalde'))
-                                            <a href="{{ route('roles.edit', $role->id) }}" class="btn btn-outline-warning" title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            @if(!in_array($role->name, ['contratista', 'supervisor', 'alcalde', 'ordenador_gasto', 'tesoreria', 'contratacion']) && $role->users_count == 0)
-                                            <form action="{{ route('roles.destroy', $role->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este rol?')">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-outline-danger" title="Eliminar">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                            @endif
-                                            @endif
-                                        </div>
-                                    </td>
-                                    @endif
-                                </tr>
-                                
-                                <!-- Colapso para mostrar permisos -->
-                                @if($role->permissions && count($role->permissions) > 0)
-                                <tr class="collapse" id="permissions-{{ $role->id }}">
-                                    <td colspan="{{ Auth::user()->isAdmin() ? '7' : '6' }}" class="bg-light">
-                                        <div class="p-2">
-                                            <strong class="text-muted">Permisos asignados:</strong>
-                                            <div class="mt-2">
-                                                @foreach($role->permissions as $permission)
-                                                <span class="badge bg-light text-dark border me-1 mb-1">
-                                                    <i class="fas fa-key me-1"></i>
-                                                    {{ ucfirst(str_replace('_', ' ', $permission)) }}
-                                                </span>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endif
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                    @else
-                    <div class="text-center py-5">
-                        <i class="fas fa-users-cog fa-4x text-muted mb-3"></i>
-                        <h4 class="text-muted">No hay roles registrados</h4>
-                        <p class="text-muted">Comienza creando el primer rol del sistema.</p>
-                        @if(Auth::user()->hasRole('alcalde'))
-                        <a href="{{ route('roles.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>
-                            Crear Primer Rol
-                        </a>
-                        @endif
-                    </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
 @push('styles')
 <style>
