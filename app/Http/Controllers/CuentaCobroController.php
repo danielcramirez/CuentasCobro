@@ -29,17 +29,6 @@ class CuentaCobroController extends Controller
 
         $cuentas = $query->paginate(15);
 
-        // Preparar información de archivos para cada cuenta
-        foreach ($cuentas as $cuenta) {
-            $cuenta->archivo_url = null;
-            $cuenta->archivo_nombre = 'Sin archivo';
-            if ($cuenta->ruta_archivo) {
-                // Para FTP, generamos una URL de descarga a través del controlador
-                $cuenta->archivo_url = route('cuentas-cobro.descargar', $cuenta->id);
-                $cuenta->archivo_nombre = basename($cuenta->ruta_archivo);
-            }
-        }
-
         return view('cuentasCobro.mostrarCuenta', compact('cuentas'));
     }
 

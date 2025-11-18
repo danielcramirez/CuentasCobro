@@ -562,13 +562,16 @@ function viewCuenta(id) {
         return;
     }
 
-    const proyecto = el.dataset.proyecto || 'Sin proyecto';
+    const proyecto = el.dataset.proyecto_servicio || 'Sin proyecto';
     const descripcion = el.dataset.descripcion || 'Sin descripción';
     const estado = el.dataset.estado || '';
     const usuario = el.dataset.usuario || '';
     const filename = el.dataset.filename || '';
     const filepath = el.dataset.filepath || '';
     const fechaRaw = el.dataset.fecha || '';
+
+    console.log(proyecto);
+    
 
     // Formatear fecha a dd/mm/yyyy si es posible
     let fechaFormatted = fechaRaw;
