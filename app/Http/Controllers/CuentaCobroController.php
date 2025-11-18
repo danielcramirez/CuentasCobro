@@ -21,9 +21,12 @@ class CuentaCobroController extends Controller
         // Si el usuario es contratista, solo ver sus propias cuentas
         if ($user && optional($user->role)->name === 'contratista') {
             $query->where('user_id', $user->id);
+        } elseif ($user && optional($user->role)->name === 'admin') {
+            // No filtrar, el admin ve todo
+        } else {
+            // Aquí puedes agregar otras restricciones para otros roles si lo necesitas
         }
 
-        // Puedes ampliar aquí: si es otro rol restringir de otra forma, o dejar ver todo para admins
         $cuentas = $query->paginate(15);
 
         return view('cuentasCobro.mostrarCuenta', compact('cuentas'));
@@ -72,24 +75,27 @@ class CuentaCobroController extends Controller
 
     public function edit($id)
     {
-        $query = CuentaCobro::select('cuenta_cobros.*', 'users.name as user_name')
-            ->join('users', 'users.id', '=', 'cuenta_cobros.user_id')
-            ->orderBy('fecha_emision', 'desc');
-
-        $cuenta = $query->findOrFail($id);
-
-        $cuenta = CuentaCobro::findOrFail($id);
+        // Buscar la cuenta de cobro con la relación del usuario
+        $cuenta = CuentaCobro::with('user')->findOrFail($id);
         
         // Verificar permisos
         $user = Auth::user();
-        if ($user->hasRole('contratista') && $cuenta->user_id !== $user->id) {
-            abort(403, 'No tienes permiso para editar esta cuenta de cobro.');
+        $userRole = optional($user->role)->name;
+        
+        // Los admins y alcaldes pueden editar cualquier cuenta
+        $esAdmin = in_array($userRole, ['admin', 'alcalde']);
+        
+        // Si no es admin y es contratista, solo puede editar sus propias cuentas
+        if (!$esAdmin && $userRole === 'contratista' && $cuenta->user_id !== $user->id) {
+            return redirect()->route('cuentas-cobro.mostrar')
+                ->with('error', 'No tienes permiso para editar esta cuenta de cobro.');
         }
         
-        // Verificar si la cuenta es editable
-        if (!$cuenta->esEditable()) {
+        // Verificar si la cuenta es editable (solo borradores y rechazadas)
+        // Pero permitir a admin/alcalde editar cualquier estado
+        if (!$esAdmin && !$cuenta->esEditable()) {
             return redirect()->route('cuentas-cobro.mostrar')
-                ->with('error', 'Esta cuenta de cobro no puede ser editada en su estado actual.');
+                ->with('error', 'Esta cuenta de cobro no puede ser editada en su estado actual (' . ucfirst($cuenta->estado) . '). Solo se pueden editar cuentas en estado Borrador o Rechazado.');
         }
         
         return view('cuentasCobro.editarCuenta', compact('cuenta'));
@@ -99,21 +105,22 @@ class CuentaCobroController extends Controller
     {
         $user = Auth::user();
         $cuenta = CuentaCobro::findOrFail($id);
+        $userRole = optional($user->role)->name;
         
         // Verificar permisos
-        if ($user->hasRole('contratista') && $cuenta->user_id !== $user->id) {
+        if ($userRole === 'contratista' && $cuenta->user_id !== $user->id) {
             abort(403, 'No tienes permiso para editar esta cuenta de cobro.');
         }
         
         // Validar estado según rol
         $estadosPermitidos = ['borrador', 'pendiente'];
-        if ($user->hasRole('supervisor')) {
+        if ($userRole === 'supervisor') {
             $estadosPermitidos = array_merge($estadosPermitidos, ['revision', 'aprobado', 'rechazado']);
         }
-        if ($user->hasRole('ordenador_gasto')) {
+        if ($userRole === 'ordenador_gasto') {
             $estadosPermitidos = array_merge($estadosPermitidos, ['aprobado', 'rechazado']);
         }
-        if ($user->hasRole('tesoreria')) {
+        if ($userRole === 'tesoreria') {
             $estadosPermitidos = array_merge($estadosPermitidos, ['pagado']);
         }
         
@@ -139,7 +146,8 @@ class CuentaCobroController extends Controller
         
         // Verificar permisos
         $user = Auth::user();
-        if ($user->hasRole('contratista') && $cuenta->user_id !== $user->id) {
+        $userRole = optional($user->role)->name;
+        if ($userRole === 'contratista' && $cuenta->user_id !== $user->id) {
             abort(403, 'No tienes permiso para eliminar esta cuenta de cobro.');
         }
         
@@ -160,6 +168,7 @@ class CuentaCobroController extends Controller
     {
         $user = Auth::user();
         $cuenta = CuentaCobro::findOrFail($id);
+        $userRole = optional($user->role)->name;
         
         $nuevoEstado = $request->input('estado');
         $comentario = $request->input('comentario', '');
@@ -167,19 +176,19 @@ class CuentaCobroController extends Controller
         // Verificar permisos según rol
         $puedeActualizar = false;
         
-        if ($user->hasRole('contratista') && $cuenta->user_id === $user->id) {
+        if ($userRole === 'contratista' && $cuenta->user_id === $user->id) {
             // Contratista solo puede enviar a pendiente desde borrador
             $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_BORRADOR && 
                               $nuevoEstado === CuentaCobro::ESTADO_PENDIENTE;
-        } elseif ($user->hasRole('supervisor')) {
+        } elseif ($userRole === 'supervisor') {
             // Supervisor puede aprobar/rechazar desde pendiente
             $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_PENDIENTE && 
                               in_array($nuevoEstado, [CuentaCobro::ESTADO_REVISION, CuentaCobro::ESTADO_RECHAZADO]);
-        } elseif ($user->hasRole('ordenador_gasto')) {
+        } elseif ($userRole === 'ordenador_gasto') {
             // Ordenador del gasto puede aprobar desde revisión
             $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_REVISION && 
                               in_array($nuevoEstado, [CuentaCobro::ESTADO_APROBADO, CuentaCobro::ESTADO_RECHAZADO]);
-        } elseif ($user->hasRole('tesoreria')) {
+        } elseif ($userRole === 'tesoreria') {
             // Tesorería puede marcar como pagado desde aprobado
             $puedeActualizar = $cuenta->estado === CuentaCobro::ESTADO_APROBADO && 
                               $nuevoEstado === CuentaCobro::ESTADO_PAGADO;
@@ -208,9 +217,10 @@ class CuentaCobroController extends Controller
     public function estadisticas()
     {
         $user = Auth::user();
+        $userRole = optional($user->role)->name;
         $estadisticas = [];
         
-        if ($user->hasRole('contratista')) {
+        if ($userRole === 'contratista') {
             $estadisticas = [
                 'total' => CuentaCobro::where('user_id', $user->id)->count(),
                 'borradores' => CuentaCobro::where('user_id', $user->id)->where('estado', CuentaCobro::ESTADO_BORRADOR)->count(),
@@ -218,7 +228,7 @@ class CuentaCobroController extends Controller
                 'aprobadas' => CuentaCobro::where('user_id', $user->id)->where('estado', CuentaCobro::ESTADO_PAGADO)->count(),
                 'valor_total' => CuentaCobro::where('user_id', $user->id)->where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor')
             ];
-        } elseif ($user->hasRole('supervisor')) {
+        } elseif ($userRole === 'supervisor') {
             $estadisticas = [
                 'pendientes_revision' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
                 'revisadas_hoy' => CuentaCobro::whereIn('estado', [CuentaCobro::ESTADO_REVISION, CuentaCobro::ESTADO_RECHAZADO])
