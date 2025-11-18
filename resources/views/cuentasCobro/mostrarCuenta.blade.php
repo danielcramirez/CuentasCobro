@@ -185,10 +185,14 @@
                         <tbody class="bg-white divide-y divide-gray-200" id="cuentas-table-body">
                             @foreach($cuentas as $cuenta)
                                 <tr class="hover:bg-gray-50 transition-colors duration-200 cuenta-row" 
+                                    data-id="{{ $cuenta->id }}"
                                     data-estado="{{ $cuenta->estado }}" 
                                     data-fecha="{{ $cuenta->fecha_emision }}"
-                                    data-proyecto="{{ strtolower($cuenta->proyecto_servicio) }}"
-                                    data-usuario="{{ strtolower($cuenta->user->name) }}">
+                                    data-proyecto="{{ $cuenta->proyecto_servicio }}"
+                                    data-usuario="{{ strtolower($cuenta->user->name) }}"
+                                    data-descripcion="{{ e($cuenta->descripcion ?? 'Sin descripción') }}"
+                                    data-filename="{{ e($cuenta->archivo_nombre ?? 'Sin archivo') }}"
+                                    data-filepath="{{ e($cuenta->archivo_url ?? '') }}">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
                                             <div class="w-3 h-3 rounded-full mr-3 {{ 
@@ -216,7 +220,6 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="text-sm text-gray-900 font-medium">{{ $cuenta->proyecto_servicio }}</div>
-                                        <div class="text-sm text-gray-500">{{ Str::limit($cuenta->description ?? 'Sin descripción', 50) }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-semibold text-gray-900">${{ number_format($cuenta->valor, 0, ',', '.') }}</div>
@@ -268,10 +271,14 @@
             <div class="lg:hidden space-y-4" id="cuentas-mobile">
                 @foreach($cuentas as $cuenta)
                     <div class="glass-card p-4 cuenta-card" 
+                         data-id="{{ $cuenta->id }}"
                          data-estado="{{ $cuenta->estado }}" 
                          data-fecha="{{ $cuenta->fecha_emision }}"
-                         data-proyecto="{{ strtolower($cuenta->proyecto_servicio) }}"
-                         data-usuario="{{ strtolower($cuenta->user->name) }}">
+                         data-proyecto="{{ $cuenta->proyecto_servicio }}"
+                         data-usuario="{{ strtolower($cuenta->user->name) }}"
+                         data-descripcion="{{ e($cuenta->descripcion ?? 'Sin descripción') }}"
+                         data-filename="{{ e($cuenta->archivo_nombre ?? 'Sin archivo') }}"
+                         data-filepath="{{ e($cuenta->archivo_url ?? '') }}">
                         <div class="flex items-start justify-between mb-3">
                             <div class="flex items-center space-x-3">
                                 <div class="w-3 h-3 rounded-full {{ 
@@ -530,8 +537,9 @@ function sortBy(column) {
 
 // Ver detalles de cuenta
 function viewCuenta(id) {
-    // Aquí puedes hacer una llamada AJAX para obtener los detalles
-    document.getElementById('view-content').innerHTML = `
+    // Mostrar cargador rápido
+    const viewContent = document.getElementById('view-content');
+    viewContent.innerHTML = `
         <div class="animate-pulse">
             <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
             <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
@@ -539,32 +547,168 @@ function viewCuenta(id) {
         </div>
     `;
     document.getElementById('view-modal').classList.remove('hidden');
-    
-    // Simular carga de datos
+
+    // Intentar tomar los datos embebidos en la fila/tarjeta
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (!el) {
+        // Si no hay elemento en el DOM, mostrar mensaje de error
+        setTimeout(() => {
+            viewContent.innerHTML = `
+                <div class="p-4">
+                    <p class="text-sm text-gray-600">No fue posible cargar los detalles de la cuenta.</p>
+                </div>
+            `;
+        }, 300);
+        return;
+    }
+
+    const proyecto = el.dataset.proyecto || 'Sin proyecto';
+    const descripcion = el.dataset.descripcion || 'Sin descripción';
+    const estado = el.dataset.estado || '';
+    const usuario = el.dataset.usuario || '';
+    const filename = el.dataset.filename || '';
+    const filepath = el.dataset.filepath || '';
+    const fechaRaw = el.dataset.fecha || '';
+
+    // Formatear fecha a dd/mm/yyyy si es posible
+    let fechaFormatted = fechaRaw;
+    if (fechaRaw) {
+        const d = new Date(fechaRaw);
+        if (!isNaN(d)) {
+            fechaFormatted = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth()+1)).slice(-2) + '/' + d.getFullYear();
+        }
+    }
+
+    // Construir contenido real
+    let fileHtml = '';
+    if (filepath) {
+        // Mostrar enlace directo (si tu Storage requiere ruta pública distinta, ajusta aquí)
+        fileHtml = `<a href="${filepath}" target="_blank" class="text-blue-600 hover:underline">${filename || 'Ver archivo'}</a>`;
+    } else if (filename) {
+        fileHtml = `<span class="text-gray-700">${filename}</span>`;
+    } else {
+        fileHtml = `<span class="text-gray-500">Sin archivo</span>`;
+    }
+
     setTimeout(() => {
-        document.getElementById('view-content').innerHTML = `
-            <div class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="text-sm font-medium text-gray-600">Número</label>
-                        <p class="text-gray-800">CC-2024-${String(id).padStart(3, '0')}</p>
-                    </div>
-                    <div>
-                        <label class="text-sm font-medium text-gray-600">Estado</label>
-                        <p class="text-gray-800">Pendiente</p>
-                    </div>
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Proyecto/Servicio</label>
-                    <p class="text-gray-800">Desarrollo de aplicación web</p>
-                </div>
-                <div>
-                    <label class="text-sm font-medium text-gray-600">Descripción</label>
-                    <p class="text-gray-800">Desarrollo completo de sistema de gestión...</p>
-                </div>
-            </div>
-        `;
-    }, 1000);
+        // Construir DOM de forma segura para evitar inyección
+        viewContent.innerHTML = '';
+
+        const container = document.createElement('div');
+        container.className = 'space-y-4';
+
+        const grid = document.createElement('div');
+        grid.className = 'grid grid-cols-2 gap-4';
+
+        const numDiv = document.createElement('div');
+        const numLabel = document.createElement('label');
+        numLabel.className = 'text-sm font-medium text-gray-600';
+        numLabel.textContent = 'Número';
+        const numP = document.createElement('p');
+        numP.className = 'text-gray-800';
+        numP.textContent = `CC-${fechaFormatted.split('/').pop() || ''}-${String(id).padStart(3, '0')}`;
+        numDiv.appendChild(numLabel);
+        numDiv.appendChild(numP);
+
+        const estadoDiv = document.createElement('div');
+        const estadoLabel = document.createElement('label');
+        estadoLabel.className = 'text-sm font-medium text-gray-600';
+        estadoLabel.textContent = 'Estado';
+        const estadoP = document.createElement('p');
+        estadoP.className = 'text-gray-800';
+        estadoP.textContent = estado ? estado.charAt(0).toUpperCase() + estado.slice(1) : '';
+        estadoDiv.appendChild(estadoLabel);
+        estadoDiv.appendChild(estadoP);
+
+        grid.appendChild(numDiv);
+        grid.appendChild(estadoDiv);
+
+        // Proyecto
+        const proyectoDiv = document.createElement('div');
+        const proyectoLabel = document.createElement('label');
+        proyectoLabel.className = 'text-sm font-medium text-gray-600';
+        proyectoLabel.textContent = 'Proyecto/Servicio';
+        const proyectoP = document.createElement('p');
+        proyectoP.className = 'text-gray-800';
+        proyectoP.textContent = proyecto;
+        proyectoDiv.appendChild(proyectoLabel);
+        proyectoDiv.appendChild(proyectoP);
+
+        // Descripción
+        const descDiv = document.createElement('div');
+        const descLabel = document.createElement('label');
+        descLabel.className = 'text-sm font-medium text-gray-600';
+        descLabel.textContent = 'Descripción';
+        const descP = document.createElement('p');
+        descP.className = 'text-gray-800';
+        descP.textContent = descripcion;
+        descDiv.appendChild(descLabel);
+        descDiv.appendChild(descP);
+
+        // Fecha y archivo
+        const bottomDiv = document.createElement('div');
+        bottomDiv.className = 'flex items-center justify-between';
+
+        const fechaDiv = document.createElement('div');
+        const fechaLabel = document.createElement('label');
+        fechaLabel.className = 'text-sm font-medium text-gray-600';
+        fechaLabel.textContent = 'Fecha';
+        const fechaP2 = document.createElement('p');
+        fechaP2.className = 'text-gray-800';
+        fechaP2.textContent = fechaFormatted;
+        fechaDiv.appendChild(fechaLabel);
+        fechaDiv.appendChild(fechaP2);
+
+        const archivoDiv = document.createElement('div');
+        const archivoLabel = document.createElement('label');
+        archivoLabel.className = 'text-sm font-medium text-gray-600';
+        archivoLabel.textContent = 'Archivo';
+        archivoDiv.appendChild(archivoLabel);
+
+        const archivoControls = document.createElement('div');
+        archivoControls.className = 'flex items-center space-x-2 mt-1';
+
+        if (filepath) {
+            const link = document.createElement('a');
+            link.href = filepath;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.className = 'text-blue-600 hover:underline';
+            link.textContent = filename || 'Ver archivo';
+
+            const downloadBtn = document.createElement('a');
+            downloadBtn.href = filepath;
+            downloadBtn.setAttribute('download', '');
+            downloadBtn.className = 'inline-flex items-center px-3 py-1 bg-gray-100 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-200';
+            downloadBtn.textContent = 'Descargar';
+
+            archivoControls.appendChild(link);
+            archivoControls.appendChild(downloadBtn);
+        } else if (filename) {
+            const span = document.createElement('span');
+            span.className = 'text-gray-700';
+            span.textContent = filename;
+            archivoControls.appendChild(span);
+        } else {
+            const span = document.createElement('span');
+            span.className = 'text-gray-500';
+            span.textContent = 'Sin archivo';
+            archivoControls.appendChild(span);
+        }
+
+        archivoDiv.appendChild(archivoControls);
+
+        bottomDiv.appendChild(fechaDiv);
+        bottomDiv.appendChild(archivoDiv);
+
+        // Montar todo
+        container.appendChild(grid);
+        container.appendChild(proyectoDiv);
+        container.appendChild(descDiv);
+        container.appendChild(bottomDiv);
+
+        viewContent.appendChild(container);
+    }, 250);
 }
 
 function closeViewModal() {

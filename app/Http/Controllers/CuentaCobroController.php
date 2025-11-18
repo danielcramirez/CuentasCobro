@@ -29,6 +29,17 @@ class CuentaCobroController extends Controller
 
         $cuentas = $query->paginate(15);
 
+        // Preparar información de archivos para cada cuenta
+        foreach ($cuentas as $cuenta) {
+            $cuenta->archivo_url = null;
+            $cuenta->archivo_nombre = 'Sin archivo';
+            if ($cuenta->ruta_archivo) {
+                // Para FTP, generamos una URL de descarga a través del controlador
+                $cuenta->archivo_url = route('cuentas-cobro.descargar', $cuenta->id);
+                $cuenta->archivo_nombre = basename($cuenta->ruta_archivo);
+            }
+        }
+
         return view('cuentasCobro.mostrarCuenta', compact('cuentas'));
     }
 
@@ -42,7 +53,7 @@ class CuentaCobroController extends Controller
 
         $user = Auth::user();
 
-        $rutasDocumentos = [];
+        $primerArchivoRuta = null;
         $disk = config('filesystems.upload_disk', 'ftp');
         if ($request->hasFile('documentos')) {
             foreach ($request->file('documentos') as $file) {
@@ -50,8 +61,8 @@ class CuentaCobroController extends Controller
                 $ext = $file->getClientOriginalExtension();
                 $ruta = 'CuentasCobro/' . date('Y-m') . '/' . $user->id . '/' . $nombre . '-' . time() . '.' . $ext;
                 $saved = Storage::disk($disk)->put($ruta, fopen($file->getRealPath(), 'r+'));
-                if ($saved) {
-                    $rutasDocumentos[] = $ruta;
+                if ($saved && !$primerArchivoRuta) {
+                    $primerArchivoRuta = $ruta;
                 }
             }
         }
@@ -60,6 +71,7 @@ class CuentaCobroController extends Controller
             'fecha_emision' => 'required|date',
             'proyecto_servicio' => 'required|string|max:255',
             'valor' => 'required|numeric|min:0',
+            'descripcion' => 'nullable|string',
         ]);
 
         $cuenta = new CuentaCobro();
@@ -67,6 +79,8 @@ class CuentaCobroController extends Controller
         $cuenta->fecha_emision = $request->input('fecha_emision');
         $cuenta->proyecto_servicio = $request->input('proyecto_servicio');
         $cuenta->valor = $request->input('valor');
+        $cuenta->descripcion = $request->input('descripcion');
+        $cuenta->ruta_archivo = $primerArchivoRuta;
         $cuenta->estado = CuentaCobro::ESTADO_BORRADOR; // Estado inicial
         $cuenta->save();
 
@@ -238,6 +252,62 @@ class CuentaCobroController extends Controller
         }
         
         return response()->json($estadisticas);
+    }
+
+    /**
+     * Descargar el archivo de una cuenta de cobro
+     */
+    public function descargar($id)
+    {
+        $cuenta = CuentaCobro::findOrFail($id);
+        
+        // Verificar permisos
+        $user = Auth::user();
+        $userRole = optional($user->role)->name;
+        
+        // Admins pueden descargar cualquier archivo
+        // Contratistas solo pueden descargar sus propios archivos
+        if ($userRole === 'contratista' && $cuenta->user_id !== $user->id) {
+            abort(403, 'No tienes permiso para descargar este archivo.');
+        }
+        
+        if (!$cuenta->ruta_archivo) {
+            abort(404, 'No hay archivo asociado a esta cuenta de cobro.');
+        }
+        
+        $disk = config('filesystems.upload_disk', 'ftp');
+        
+        if (!Storage::disk($disk)->exists($cuenta->ruta_archivo)) {
+            abort(404, 'El archivo no existe.');
+        }
+        
+        $filename = basename($cuenta->ruta_archivo);
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        
+        // Determinar mime type básico por extensión
+        $mimeTypes = [
+            'pdf' => 'application/pdf',
+            'doc' => 'application/msword',
+            'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'xls' => 'application/vnd.ms-excel',
+            'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'jpg' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+        ];
+        $mimeType = $mimeTypes[$extension] ?? 'application/octet-stream';
+        
+        return response()->stream(function() use ($disk, $cuenta) {
+            $stream = Storage::disk($disk)->readStream($cuenta->ruta_archivo);
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
     }
 
 }

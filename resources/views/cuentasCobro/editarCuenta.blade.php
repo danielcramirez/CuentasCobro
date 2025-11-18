@@ -3,7 +3,7 @@
 @section('title', 'Editar Cuenta de Cobro - CuentasCobro')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 py-8">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-32 pb-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <!-- Header -->
@@ -294,6 +294,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .glass-card {
     animation: fadeInUp 0.6s ease-out;
+}
+
+/* Ajuste extra para evitar solapamiento con navbar fijo en pantallas pequeñas */
+@media (max-width: 768px) {
+    .pt-32 {
+        padding-top: 7rem !important;
+    }
 }
 </style>
 @endsection

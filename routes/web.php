@@ -48,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('cuentas-cobro')->name('cuentas-cobro.')->group(function () {
         Route::post('/{id}/cambiar-estado', [CuentaCobroController::class, 'cambiarEstado'])->name('cambiar-estado');
         Route::get('/estadisticas', [CuentaCobroController::class, 'estadisticas'])->name('estadisticas');
+        Route::get('/{id}/descargar', [CuentaCobroController::class, 'descargar'])->name('descargar');
     });
 
 
