@@ -25,7 +25,7 @@ class ContratistaDashboardController extends Controller
         // Obtener datos principales del contratista
         $dashboardData = $this->getContractorData($user);
         
-        return view('dashboard.contratista', $dashboardData);
+        return view('roles.contratista.dashboard', $dashboardData);
     }
 
     /**

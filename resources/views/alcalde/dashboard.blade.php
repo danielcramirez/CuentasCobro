@@ -1,4 +1,4 @@
-@extends('dashboard.dashboard')
+@extends('shared.dashboard-base')
 
 @section('dashboardRoles')
 <!-- Panel específico para Alcalde -->

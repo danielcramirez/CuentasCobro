@@ -14,8 +14,10 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RoleSeeder::class,        // Primero los roles
-            AdminUserSeeder::class,   // Luego el usuario administrador
+            RoleSeeder::class,           // Primero los roles
+            AdminUserSeeder::class,      // Luego el usuario administrador
+            SupervisorUserSeeder::class, // Usuarios supervisores de prueba
+            TesoreriaUserSeeder::class,  // Usuarios de tesorería de prueba
         ]);
     }
 }

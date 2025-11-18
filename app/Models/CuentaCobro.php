@@ -128,4 +128,69 @@ class CuentaCobro extends Model
     {
         return in_array($this->estado, [self::ESTADO_BORRADOR, self::ESTADO_RECHAZADO]);
     }
+
+    /**
+     * Verificar si la cuenta se puede eliminar
+     */
+    public function sePuedeEliminar()
+    {
+        return $this->estado === self::ESTADO_BORRADOR;
+    }
+
+    /**
+     * Obtener el número de cuenta formateado
+     */
+    public function getNumeroFormateadoAttribute()
+    {
+        return str_pad($this->id, 6, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Obtener el color del estado para la UI
+     */
+    public function getColorEstadoAttribute()
+    {
+        return match($this->estado) {
+            self::ESTADO_BORRADOR => 'gray',
+            self::ESTADO_PENDIENTE => 'yellow',
+            self::ESTADO_REVISION => 'blue',
+            self::ESTADO_APROBADO => 'green',
+            self::ESTADO_PAGADO => 'emerald',
+            self::ESTADO_RECHAZADO => 'red',
+            default => 'gray'
+        };
+    }
+
+    /**
+     * Obtener el icono del estado para la UI
+     */
+    public function getIconoEstadoAttribute()
+    {
+        return match($this->estado) {
+            self::ESTADO_BORRADOR => 'fas fa-edit',
+            self::ESTADO_PENDIENTE => 'fas fa-clock',
+            self::ESTADO_REVISION => 'fas fa-search',
+            self::ESTADO_APROBADO => 'fas fa-thumbs-up',
+            self::ESTADO_PAGADO => 'fas fa-check-circle',
+            self::ESTADO_RECHAZADO => 'fas fa-times-circle',
+            default => 'fas fa-question'
+        };
+    }
+
+    /**
+     * Scope para cuentas del mes actual
+     */
+    public function scopeDelMes($query)
+    {
+        return $query->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+    }
+
+    /**
+     * Scope para cuentas del año actual
+     */
+    public function scopeDelAno($query)
+    {
+        return $query->whereYear('created_at', now()->year);
+    }
 }

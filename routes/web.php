@@ -6,6 +6,8 @@ use App\Http\Controllers\CrearUsuario;
 use App\Http\Controllers\RolControler;
 use App\Http\Controllers\CuentaCobroController;
 use App\Http\Controllers\ContratistaDashboardController;
+use App\Http\Controllers\SupervisorController;
+use App\Http\Controllers\TesoreriaController;
 
 // Ruta raíz redirige al login
 Route::get('/', function () {
@@ -27,25 +29,69 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
 
-    // Dashboard específico para contratista
-    Route::middleware(['check.role:contratista'])->group(function () {
-        Route::get('/contratista/dashboard', [ContratistaDashboardController::class, 'index'])->name('contratista.dashboard');
-        Route::get('/api/contratista/dashboard-data', [ContratistaDashboardController::class, 'getDashboardData'])->name('api.contratista.dashboard');
+    // Rutas específicas para contratista
+    Route::middleware(['check.role:contratista'])->prefix('contratista')->name('contratista.')->group(function () {
+        // Dashboard del contratista
+        Route::get('/dashboard', [ContratistaDashboardController::class, 'index'])->name('dashboard');
+        
+        // Gestión de cuentas de cobro del contratista
+        Route::prefix('cuentas')->name('cuentas.')->group(function () {
+            Route::get('/', [CuentaCobroController::class, 'indexContratista'])->name('index');
+            Route::get('/crear', [CuentaCobroController::class, 'createContratista'])->name('crear');
+            Route::post('/', [CuentaCobroController::class, 'storeContratista'])->name('store');
+            Route::get('/{id}', [CuentaCobroController::class, 'showContratista'])->name('ver');
+            Route::get('/{id}/editar', [CuentaCobroController::class, 'editContratista'])->name('editar');
+            Route::put('/{id}', [CuentaCobroController::class, 'updateContratista'])->name('update');
+            Route::get('/{id}/eliminar', [CuentaCobroController::class, 'deleteContratista'])->name('eliminar');
+            Route::delete('/{id}', [CuentaCobroController::class, 'destroyContratista'])->name('destroy');
+        });
+    });
+
+    // API routes para contratista (protegidas)
+    Route::middleware(['auth', 'check.role:contratista'])->prefix('api/contratista')->name('api.contratista.')->group(function () {
+        Route::get('/dashboard-data', [ContratistaDashboardController::class, 'getDashboardData'])->name('dashboard');
+    });
+
+    // Rutas específicas para supervisor
+    Route::middleware(['auth', 'check.role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
+        // Dashboard del supervisor
+        Route::get('/', [SupervisorController::class, 'index'])->name('index');
+        Route::get('/dashboard', [SupervisorController::class, 'dashboard'])->name('dashboard');
+        
+        // Gestión de cuentas de cobro (supervisión)
+        Route::prefix('cuentas-cobro')->name('cuentas-cobro.')->group(function () {
+            Route::get('/', [SupervisorController::class, 'cuentasCobro'])->name('index');
+            Route::get('/{id}', [SupervisorController::class, 'showCuentaCobro'])->name('show');
+            Route::put('/{id}', [SupervisorController::class, 'updateCuentaCobro'])->name('update');
+        });
+        
+        // Gestión de contratistas
+        Route::prefix('contratistas')->name('contratistas.')->group(function () {
+            Route::get('/', [SupervisorController::class, 'contratistas'])->name('index');
+            Route::get('/{id}', [SupervisorController::class, 'showContratista'])->name('show');
+        });
+    });
+
+    // API routes para supervisor (protegidas)
+    Route::middleware(['auth', 'check.role:supervisor'])->prefix('api/supervisor')->name('api.supervisor.')->group(function () {
+        Route::get('/dashboard-data', [SupervisorController::class, 'getDashboardData'])->name('dashboard');
     });
 
     // Rutas de Cuentas de Cobro
     Route::resource('cuentas-cobro', CuentaCobroController::class)
-        ->except(['show'])
         ->names([
         'index' => 'cuentas-cobro.mostrar',
         'create' => 'cuentas-cobro.crear',
         'store' => 'cuentas-cobro.store',
+        'show' => 'cuentas-cobro.ver',
         'edit' => 'cuentas-cobro.edit',
+        'update' => 'cuentas-cobro.update',
         'destroy' => 'cuentas-cobro.destroy'
     ]);
 
     // Rutas adicionales para Cuentas de Cobro
     Route::prefix('cuentas-cobro')->name('cuentas-cobro.')->group(function () {
+        Route::get('/{id}/eliminar', [CuentaCobroController::class, 'confirmarEliminacion'])->name('confirmar-eliminacion');
         Route::post('/{id}/cambiar-estado', [CuentaCobroController::class, 'cambiarEstado'])->name('cambiar-estado');
         Route::get('/estadisticas', [CuentaCobroController::class, 'estadisticas'])->name('estadisticas');
         Route::get('/{id}/descargar', [CuentaCobroController::class, 'descargar'])->name('descargar');
@@ -96,6 +142,27 @@ Route::middleware(['auth'])->group(function () {
         })->name('settings');
     });
 });
+
+    // Rutas específicas para tesorería
+    Route::middleware(['auth', 'check.role:tesoreria'])->prefix('tesoreria')->name('tesoreria.')->group(function () {
+        // Dashboard de tesorería
+        Route::get('/', [TesoreriaController::class, 'index'])->name('index');
+        Route::get('/dashboard', [TesoreriaController::class, 'index'])->name('dashboard');
+        
+        // Gestión de cuentas
+        Route::get('/cuentas', [TesoreriaController::class, 'cuentas'])->name('cuentas');
+        Route::get('/pagos-realizados', [TesoreriaController::class, 'pagosRealizados'])->name('pagos-realizados');
+        Route::get('/cuentas-pendientes', [TesoreriaController::class, 'pendientes'])->name('pendientes');
+        
+        // Acciones de pago y aprobación
+        Route::post('/marcar-pagada/{id}', [TesoreriaController::class, 'marcarPagada'])->name('marcarPagada');
+        Route::post('/estado/{id}', [TesoreriaController::class, 'actualizarEstado'])->name('actualizarEstado');
+    });
+
+    // API routes para tesorería (protegidas)
+    Route::middleware(['auth', 'check.role:tesoreria'])->prefix('api/tesoreria')->name('api.tesoreria.')->group(function () {
+        Route::get('/dashboard-data', [TesoreriaController::class, 'getDashboardData'])->name('dashboard');
+    });
 
 // Rutas adicionales que requieren roles específicos (placeholders para futuro uso)
 // NOTA: Las rutas principales de dashboard están definidas arriba usando controladores

@@ -3,16 +3,42 @@
 @section('title', 'Eliminar Cuenta de Cobro - CuentasCobro')
 
 @section('content')
-<div class="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-pink-50 py-8">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-3xl mx-auto">
         
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 to-pink-600 rounded-full mb-4 shadow-lg animate-pulse">
-                <i class="fas fa-trash-alt text-white text-3xl"></i>
+        <!-- Breadcrumb de navegación -->
+        <div class="mb-6">
+            <nav class="flex items-center space-x-2 text-sm text-gray-500" aria-label="Breadcrumb">
+                <a href="{{ route('dashboard') }}" class="hover:text-gray-700 transition-colors flex items-center">
+                    <i class="fas fa-home mr-1"></i>
+                    Inicio
+                </a>
+                <i class="fas fa-chevron-right text-gray-300"></i>
+                @if(auth()->user()->hasRole('contratista'))
+                    <a href="{{ route('contratista.dashboard') }}" class="hover:text-gray-700 transition-colors">
+                        Dashboard Contratista
+                    </a>
+                    <i class="fas fa-chevron-right text-gray-300"></i>
+                @endif
+                <a href="{{ route('cuentas-cobro.mostrar') }}" class="hover:text-gray-700 transition-colors">
+                    Cuentas de Cobro
+                </a>
+                <i class="fas fa-chevron-right text-gray-300"></i>
+                <span class="text-gray-700 font-medium">Eliminar #{{ $cuenta->id }}</span>
+            </nav>
+        </div>
+        
+        <!-- Header mejorado -->
+        <div class="glass-card p-6 mb-8 slide-up">
+            <div class="flex items-center justify-center">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-red-500 to-pink-600 rounded-full mb-4 shadow-lg">
+                        <i class="fas fa-trash-alt text-white text-2xl sm:text-3xl"></i>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">Eliminar Cuenta de Cobro</h1>
+                    <p class="text-lg sm:text-xl text-gray-600">Cuenta #{{ $cuenta->id }} - Esta acción no se puede deshacer</p>
+                </div>
             </div>
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">Eliminar Cuenta de Cobro</h1>
-            <p class="text-xl text-gray-600">Esta acción no se puede deshacer</p>
         </div>
 
         <!-- Warning Card -->
@@ -84,9 +110,8 @@
                             ${{ number_format($cuenta->valor, 2, ',', '.') }}
                         </span>
                     </div>
-                    
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-600 font-medium">Contratista:</span>
+                      <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                        <span class="text-gray-600 font-medium">{{ $cuenta->user->role ? ucfirst($cuenta->user->role->name) : 'Usuario' }}:</span>
                         <span class="text-gray-900 font-bold">{{ $cuenta->user->name ?? 'N/A' }}</span>
                     </div>
                 </div>
@@ -128,27 +153,36 @@
                     <div class="text-red-500 text-sm mt-1 hidden" id="confirmationError">
                         Debes escribir exactamente "ELIMINAR" para continuar
                     </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
-                    <button 
-                        type="submit" 
-                        id="deleteBtn"
-                        class="flex-1 bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-xl hover:from-red-600 hover:to-pink-700 focus:ring-4 focus:ring-red-300 transition-all duration-300 font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                        disabled
-                    >
-                        <i class="fas fa-trash-alt mr-2"></i>
-                        ELIMINAR CUENTA DE COBRO
-                    </button>
+                </div>                <!-- Action Buttons mejorados -->
+                <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center space-y-4 lg:space-y-0 pt-6 border-t border-gray-200">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        @if(auth()->user()->hasRole('contratista'))
+                            <a href="{{ route('contratista.dashboard') }}" 
+                               class="inline-flex items-center justify-center px-4 sm:px-6 py-3 border-2 border-purple-300 text-purple-700 bg-purple-50 rounded-xl hover:bg-purple-100 hover:border-purple-400 transition-all duration-300 font-medium text-sm sm:text-base">
+                                <i class="fas fa-home mr-2"></i>
+                                <span class="hidden sm:inline">Dashboard</span>
+                                <span class="sm:hidden">Inicio</span>
+                            </a>
+                        @endif
+                        <a href="{{ route('cuentas-cobro.mostrar') }}" 
+                           class="inline-flex items-center justify-center px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-medium text-sm sm:text-base">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            <span class="hidden sm:inline">Cancelar y Volver</span>
+                            <span class="sm:hidden">Cancelar</span>
+                        </a>
+                    </div>
                     
-                    <a 
-                        href="{{ route('cuentas-cobro.index') }}" 
-                        class="flex-1 bg-gray-500 text-white px-6 py-3 rounded-xl hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 transition-all duration-300 font-semibold text-center"
-                    >
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Cancelar y Volver
-                    </a>
+                    <div class="flex justify-center sm:justify-end">
+                        <button 
+                            type="submit" 
+                            id="deleteBtn"
+                            class="inline-flex items-center justify-center px-6 sm:px-8 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:from-red-600 hover:to-pink-700 focus:ring-4 focus:ring-red-300 transition-all duration-300 font-bold disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
+                            disabled>
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            <span class="hidden sm:inline">ELIMINAR CUENTA DE COBRO</span>
+                            <span class="sm:hidden">ELIMINAR</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
