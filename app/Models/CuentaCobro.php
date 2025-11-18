@@ -18,6 +18,8 @@ class CuentaCobro extends Model
         'proyecto_servicio',
         'valor',
         'estado',
+        'descripcion',
+        'ruta_archivo',
     ];
 
     protected $casts = [
@@ -25,7 +27,26 @@ class CuentaCobro extends Model
         'proyecto_servicio' => 'string',
         'valor' => 'decimal:2',
         'estado' => 'string',
+        'descripcion' => 'string',
+        'ruta_archivo' => 'string',
     ];
+
+    /**
+     * Accesor para mantener compatibilidad con propiedad `description` usada en vistas.
+     * Mapea `$cuenta->description` a la columna `descripcion`.
+     */
+    public function getDescriptionAttribute()
+    {
+        return $this->attributes['descripcion'] ?? null;
+    }
+
+    /**
+     * Mutator para permitir asignar `$cuenta->description = '...'` y guardarlo en `descripcion`.
+     */
+    public function setDescriptionAttribute($value)
+    {
+        $this->attributes['descripcion'] = $value;
+    }
 
     /**
      * Relación con usuario (propietario / creador de la cuenta de cobro)
