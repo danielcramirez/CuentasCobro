@@ -5,6 +5,23 @@
 @section('content')
 <!-- Contenedor principal con padding superior para el navbar fijo -->
 <div class="pt-32 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
+
+    @if(session('error'))
+        <div id="error-popup" class="fixed inset-x-0 top-24 flex justify-center z-50 pointer-events-auto">
+            <div class="w-full max-w-2xl mx-4 glass-card p-4 flex items-start space-x-4 shadow-lg transition transform duration-300 opacity-100" role="alert">
+                <div class="text-red-600 mt-1">
+                    <i class="fas fa-exclamation-circle text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold text-gray-800">Atención</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ session('error') }}</p>
+                </div>
+                <button type="button" onclick="closeErrorPopup()" class="text-gray-400 hover:text-gray-600 ml-2 p-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    @endif
     <!-- Header de la página -->
     <div class="max-w-7xl mx-auto mb-8">
         <div class="glass-card p-6 slide-up">
@@ -199,7 +216,7 @@
                                     </td>
                                     <td class="px-6 py-4">
                                         <div class="text-sm text-gray-900 font-medium">{{ $cuenta->proyecto_servicio }}</div>
-                                        <div class="text-sm text-gray-500">{{ Str::limit($cuenta->descripcion ?? 'Sin descripción', 50) }}</div>
+                                        <div class="text-sm text-gray-500">{{ Str::limit($cuenta->description ?? 'Sin descripción', 50) }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-semibold text-gray-900">${{ number_format($cuenta->valor, 0, ',', '.') }}</div>
@@ -587,6 +604,19 @@ function confirmDelete() {
         document.body.appendChild(form);
         form.submit();
     }
+}
+
+// Cerrar popup de error y eliminar del DOM con animación
+function closeErrorPopup() {
+    const el = document.getElementById('error-popup');
+    if (!el) return;
+    const card = el.querySelector('.glass-card') || el.firstElementChild;
+    if (card) {
+        card.classList.add('opacity-0', 'scale-95');
+    }
+    setTimeout(() => {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+    }, 260);
 }
 </script>
 @endpush
