@@ -75,16 +75,8 @@ class AuthController extends Controller
 
         // Datos específicos para supervisor
         if ($user->hasRole('supervisor')) {
-            $dashboardLink = 'supervisor.dashboard';
-            $dashboardData = array_merge($dashboardData, [
-                'pendingReviews' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
-                'approvedToday' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
-                    ->whereDate('updated_at', today())->count(),
-                'rejectedToday' => CuentaCobro::where('estado', 'rechazado')
-                    ->whereDate('updated_at', today())->count(),
-                'totalCuentasCobro' => CuentaCobro::count(),
-                'recentCuentasCobro' => CuentaCobro::with('user')->latest()->limit(5)->get()
-            ]);
+            // Redirigir a dashboard específico de supervisor
+            return redirect()->route('supervisor.dashboard');
         }
 
         // Datos específicos para contratista
@@ -95,18 +87,8 @@ class AuthController extends Controller
 
         // Datos específicos para tesorería
         if ($user->hasRole('tesoreria')) {
-            $dashboardLink = 'shared.other-roles';
-            $dashboardData = array_merge($dashboardData, [
-                'pendingPayments' => CuentaCobro::where('estado', 'aprobado')->count(),
-                'paymentsToday' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
-                    ->whereDate('updated_at', today())->count(),
-                'totalPaid' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor'),
-                'monthlyPayments' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
-                    ->whereMonth('updated_at', now()->month)->sum('valor'),
-                'recentPayments' => CuentaCobro::with('user')
-                    ->where('estado', CuentaCobro::ESTADO_PAGADO)
-                    ->latest()->limit(5)->get()
-            ]);
+            // Redirigir a dashboard específico de tesorería
+            return redirect()->route('tesoreria.dashboard');
         }
 
         // Datos específicos para ordenador del gasto

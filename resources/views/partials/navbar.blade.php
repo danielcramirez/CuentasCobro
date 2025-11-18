@@ -59,15 +59,47 @@
                             <span>Administración</span>
                         </a>
                     @elseif($userRole === 'contratista')
+                        <a href="{{ route('contratista.dashboard') }}" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-tachometer-alt text-sm"></i>
+                            <span>Mi Dashboard</span>
+                        </a>
                         <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
                             <i class="fas fa-handshake text-sm"></i>
                             <span>Contrato</span>
                         </a>
                     @elseif($userRole === 'supervisor')
-                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
-                            <i class="fas fa-chart-line text-sm"></i>
-                            <span>Reportes</span>
+                        <a href="{{ route('supervisor.dashboard') }}" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-tachometer-alt text-sm"></i>
+                            <span>Mi Dashboard</span>
                         </a>
+                        <!-- Dropdown de Supervisión -->
+                        <div class="relative group">
+                            <button class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                                <i class="fas fa-clipboard-check text-sm"></i>
+                                <span>Supervisión</span>
+                                <i class="fas fa-chevron-down text-xs transition-transform duration-300 group-hover:rotate-180"></i>
+                            </button>
+                            
+                            <!-- Dropdown menu -->
+                            <div class="absolute top-full left-0 mt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                <div class="glass-card p-2 shadow-xl">
+                                    <a href="{{ route('supervisor.cuentas-cobro.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 hover:text-primary-600 transition-all duration-200">
+                                        <i class="fas fa-file-invoice text-orange-500"></i>
+                                        <div>
+                                            <p class="font-medium">Revisar Cuentas</p>
+                                            <p class="text-xs text-gray-500">Aprobar y rechazar</p>
+                                        </div>
+                                    </a>
+                                    <a href="{{ route('supervisor.contratistas.index') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 hover:text-primary-600 transition-all duration-200">
+                                        <i class="fas fa-users text-blue-500"></i>
+                                        <div>
+                                            <p class="font-medium">Contratistas</p>
+                                            <p class="text-xs text-gray-500">Gestión y seguimiento</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     @elseif($userRole === 'ordenador_gasto')
                         <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
                             <i class="fas fa-calculator text-sm"></i>
@@ -78,14 +110,45 @@
                             <span>Reportes Financieros</span>
                         </a>
                     @elseif($userRole === 'tesoreria')
-                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
-                            <i class="fas fa-credit-card text-sm"></i>
-                            <span>Procesar Pagos</span>
+                        <a href="{{ route('tesoreria.dashboard') }}" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                            <i class="fas fa-tachometer-alt text-sm"></i>
+                            <span>Mi Dashboard</span>
                         </a>
-                        <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
-                            <i class="fas fa-chart-pie text-sm"></i>
-                            <span>Reportes Financieros</span>
-                        </a>
+                        <!-- Dropdown de Tesorería -->
+                        <div class="relative group">
+                            <button class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
+                                <i class="fas fa-university text-sm"></i>
+                                <span>Tesorería</span>
+                                <i class="fas fa-chevron-down text-xs transition-transform duration-300 group-hover:rotate-180"></i>
+                            </button>
+                            
+                            <!-- Dropdown menu -->
+                            <div class="absolute top-full left-0 mt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0">
+                                <div class="glass-card p-2 shadow-xl">
+                                    <a href="{{ route('tesoreria.cuentas') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 hover:text-primary-600 transition-all duration-200">
+                                        <i class="fas fa-file-invoice text-blue-500"></i>
+                                        <div>
+                                            <p class="font-medium">Gestionar Cuentas</p>
+                                            <p class="text-xs text-gray-500">Ver y procesar pagos</p>
+                                        </div>
+                                    </a>
+                                    <a href="{{ route('tesoreria.pendientes') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 hover:text-primary-600 transition-all duration-200">
+                                        <i class="fas fa-clock text-orange-500"></i>
+                                        <div>
+                                            <p class="font-medium">Cuentas Pendientes</p>
+                                            <p class="text-xs text-gray-500">Revisar y aprobar</p>
+                                        </div>
+                                    </a>
+                                    <a href="{{ route('tesoreria.pagos-realizados') }}" class="flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-white/70 hover:text-primary-600 transition-all duration-200">
+                                        <i class="fas fa-check-circle text-green-500"></i>
+                                        <div>
+                                            <p class="font-medium">Pagos Realizados</p>
+                                            <p class="text-xs text-gray-500">Historial de pagos</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     @elseif($userRole === 'contratacion')
                         <a href="#" class="flex items-center space-x-2 px-4 py-2 rounded-xl text-gray-700 hover:text-primary-600 hover:bg-white/50 transition-all duration-300 font-medium">
                             <i class="fas fa-file-contract text-sm"></i>
@@ -211,13 +274,21 @@
                             <span>Reportes Financieros</span>
                         </a>
                     @elseif($userRole === 'tesoreria')
-                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
-                            <i class="fas fa-credit-card text-green-500"></i>
-                            <span>Procesar Pagos</span>
+                        <a href="{{ route('tesoreria.dashboard') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-tachometer-alt text-blue-500"></i>
+                            <span>Dashboard Tesorería</span>
                         </a>
-                        <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
-                            <i class="fas fa-chart-pie text-purple-500"></i>
-                            <span>Reportes Financieros</span>
+                        <a href="{{ route('tesoreria.cuentas') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-file-invoice text-blue-500"></i>
+                            <span>Gestionar Cuentas</span>
+                        </a>
+                        <a href="{{ route('tesoreria.pendientes') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-clock text-orange-500"></i>
+                            <span>Cuentas Pendientes</span>
+                        </a>
+                        <a href="{{ route('tesoreria.pagos-realizados') }}" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">
+                            <i class="fas fa-check-circle text-green-500"></i>
+                            <span>Pagos Realizados</span>
                         </a>
                     @elseif($userRole === 'contratacion')
                         <a href="#" class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-white/70 transition-all duration-200">

@@ -5,38 +5,69 @@
 @section('content')
 <!-- Contenedor principal del dashboard con padding superior para el navbar fijo -->
 <div class="pt-24 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
+    <!-- Breadcrumb de navegación mejorado -->
+    <div class="max-w-7xl mx-auto mb-4">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500" aria-label="Breadcrumb">
+            <a href="{{ route('dashboard') }}" class="hover:text-gray-700 transition-colors flex items-center">
+                <i class="fas fa-home mr-1"></i>
+                Inicio
+            </a>
+            <i class="fas fa-chevron-right text-gray-300"></i>
+            <span class="text-gray-700 font-medium">Dashboard Contratista</span>
+        </nav>
+    </div>
+
     <!-- Header del dashboard con animación -->
     <div class="max-w-7xl mx-auto mb-8">
-        <div class="glass-card p-6 slide-up">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+        <div class="glass-card p-4 sm:p-6 slide-up">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                 <!-- Información del usuario -->
-                <div class="flex items-center space-x-4 mb-4 lg:mb-0">
-                    <div class="gradient-primary w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-user-tie text-white text-2xl"></i>
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <div class="gradient-primary w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-user-tie text-white text-lg sm:text-2xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-800 font-poppins">
+                        <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 font-poppins">
                             ¡Bienvenido, {{ $user->name }}!
                         </h1>
                         <div class="flex items-center space-x-2 mt-1">
-                            <span class="text-gray-600">Rol:</span>
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium gradient-secondary text-white shadow-sm">
+                            <span class="text-gray-600 text-sm">Rol:</span>
+                            <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium gradient-secondary text-white shadow-sm">
                                 <i class="fas fa-user-tie mr-1"></i>
-                                Contratista
+                                {{ $user->role->name ? ucfirst($user->role->name) : 'Sin rol' }}
                             </span>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Acciones rápidas -->
-                <div class="flex items-center space-x-3">
-                    <button class="gradient-primary text-white px-4 py-2 rounded-xl hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 font-medium" onclick="refreshDashboard()">
-                        <i class="fas fa-sync-alt mr-2"></i>
-                        Actualizar
-                    </button>
-                    <div class="flex items-center space-x-2 text-sm text-gray-600">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div class="flex items-center gap-3">
+                        <button 
+                            class="gradient-primary text-white px-3 sm:px-4 py-2 rounded-xl hover:shadow-lg transform hover:-translate-y-1 transition-all duration-300 font-medium text-sm flex items-center"
+                            onclick="refreshDashboard()"
+                            id="refresh-btn">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            <span class="hidden sm:inline">Actualizar</span>
+                            <span class="sm:hidden">Sync</span>
+                        </button>
+                        <a href="{{ route('contratista.cuentas.crear') }}" 
+                           class="bg-green-600 hover:bg-green-700 text-white px-3 sm:px-4 py-2 rounded-xl transition-all duration-300 font-medium text-sm flex items-center">
+                            <i class="fas fa-plus mr-2"></i>
+                            <span class="hidden sm:inline">Nueva Cuenta</span>
+                            <span class="sm:hidden">Nueva</span>
+                        </a>
+                    </div>
+                    <div class="flex items-center space-x-2 text-xs sm:text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg">
                         <i class="fas fa-clock"></i>
-                        <span id="lastUpdate">{{ now()->format('H:i') }}</span>
+                        <span>Última actualización:</span>
+                        <span id="lastUpdate" class="font-medium">
+                            @if($ultimaFechaEnvio)
+                                {{ $ultimaFechaEnvio->format('H:i') }}
+                            @else
+                                {{ now()->format('H:i') }}
+                            @endif
+                        </span>
                     </div>
                 </div>
             </div>
@@ -215,7 +246,7 @@
                             </div>
                             <h4 class="text-lg font-medium text-gray-600 mb-2">No tienes cuentas de cobro</h4>
                             <p class="text-gray-500 mb-4">Comienza creando tu primera cuenta de cobro</p>
-                            <a href="{{ route('cuentas-cobro.crear') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <a href="{{ route('contratista.cuentas.crear') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                                 <i class="fas fa-plus mr-2"></i>
                                 Crear primera cuenta
                             </a>
@@ -235,7 +266,7 @@
                     </h3>
                     <div class="space-y-3">
                         <!-- Crear nueva cuenta -->
-                        <a href="{{ route('cuentas-cobro.crear') }}" class="group block">
+                        <a href="{{ route('contratista.cuentas.crear') }}" class="group block">
                             <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-xl border border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
                                 <div class="flex items-center space-x-3">
                                     <div class="bg-gradient-to-br from-blue-500 to-indigo-600 w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -250,7 +281,7 @@
                         </a>
                         
                         <!-- Ver mis cuentas -->
-                        <a href="{{ route('cuentas-cobro.mostrar') }}" class="group block">
+                        <a href="{{ route('contratista.cuentas.index') }}" class="group block">
                             <div class="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-xl border border-green-200 hover:border-green-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
                                 <div class="flex items-center space-x-3">
                                     <div class="bg-gradient-to-br from-green-500 to-emerald-600 w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -259,6 +290,21 @@
                                     <div>
                                         <h4 class="font-semibold text-gray-800">Mis Cuentas</h4>
                                         <p class="text-sm text-gray-600">{{ $totalCuentas }} registradas</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+
+                        <!-- Volver al dashboard principal -->
+                        <a href="{{ route('dashboard') }}" class="group block">
+                            <div class="bg-gradient-to-br from-purple-50 to-pink-100 p-4 rounded-xl border border-purple-200 hover:border-purple-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
+                                <div class="flex items-center space-x-3">
+                                    <div class="bg-gradient-to-br from-purple-500 to-pink-600 w-10 h-10 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                                        <i class="fas fa-home text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">Dashboard Principal</h4>
+                                        <p class="text-sm text-gray-600">Ir al menú general</p>
                                     </div>
                                 </div>
                             </div>
@@ -360,7 +406,7 @@
                 </div>
                 @if($proximosPagos->count() >= 5)
                 <div class="mt-4 text-center">
-                    <a href="{{ route('cuentas-cobro.mostrar') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    <a href="{{ route('contratista.cuentas.index') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                         Ver todas las cuentas →
                     </a>
                 </div>
@@ -756,30 +802,46 @@ function setupAutoRefresh() {
 }
 
 function refreshDashboard() {
-    const button = event.target;
+    const button = document.getElementById('refresh-btn') || event.target;
     const originalText = button.innerHTML;
     
     // Mostrar estado de carga
-    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Actualizando...';
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i><span class="hidden sm:inline">Actualizando...</span><span class="sm:hidden">...</span>';
     button.disabled = true;
+    button.classList.add('opacity-75', 'cursor-not-allowed');
     
     refreshDashboardData().then(() => {
         // Restaurar botón
         button.innerHTML = originalText;
         button.disabled = false;
+        button.classList.remove('opacity-75', 'cursor-not-allowed');
         
         // Mostrar feedback
         showToast('Dashboard actualizado correctamente', 'success');
         
         // Actualizar timestamp
-        document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('es-ES', {
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }).catch(() => {
+        const lastUpdateElement = document.getElementById('lastUpdate');
+        if (lastUpdateElement) {
+            lastUpdateElement.textContent = new Date().toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
+        // Animar indicador de actualización
+        const updateElement = document.querySelector('#lastUpdate').parentElement;
+        updateElement.classList.add('animate-pulse');
+        setTimeout(() => {
+            updateElement.classList.remove('animate-pulse');
+        }, 1000);
+        
+    }).catch((error) => {
         button.innerHTML = originalText;
         button.disabled = false;
-        showToast('Error al actualizar el dashboard', 'error');
+        button.classList.remove('opacity-75', 'cursor-not-allowed');
+        
+        console.error('Error refreshing dashboard:', error);
+        showToast('Error al actualizar el dashboard. Intente nuevamente.', 'error');
     });
 }
 
@@ -883,6 +945,10 @@ function setupInteractiveElements() {
 }
 
 function showToast(message, type = 'info', duration = 3000) {
+    // Remover toasts existentes del mismo tipo para evitar acumulación
+    const existingToasts = document.querySelectorAll(`[data-toast-type="${type}"]`);
+    existingToasts.forEach(toast => toast.remove());
+    
     const toast = document.createElement('div');
     const bgColor = {
         'success': 'bg-green-500',
@@ -891,11 +957,23 @@ function showToast(message, type = 'info', duration = 3000) {
         'info': 'bg-blue-500'
     }[type] || 'bg-gray-500';
     
-    toast.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50`;
+    const icon = {
+        'success': 'fas fa-check-circle',
+        'error': 'fas fa-exclamation-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'info': 'fas fa-info-circle'
+    }[type] || 'fas fa-info-circle';
+    
+    toast.setAttribute('data-toast-type', type);
+    toast.className = `fixed top-4 right-4 ${bgColor} text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-all duration-300 z-50 max-w-sm`;
     toast.innerHTML = `
-        <div class="flex items-center">
-            <div class="flex-1">${message}</div>
-            <button onclick="this.parentElement.parentElement.remove()" class="ml-3 text-white hover:text-gray-200">
+        <div class="flex items-center space-x-3">
+            <i class="${icon} text-lg"></i>
+            <div class="flex-1 text-sm sm:text-base font-medium">${message}</div>
+            <button 
+                onclick="removeToast(this.parentElement.parentElement)" 
+                class="ml-2 text-white hover:text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded p-1"
+                aria-label="Cerrar notificación">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -910,9 +988,20 @@ function showToast(message, type = 'info', duration = 3000) {
     
     // Auto remove
     setTimeout(() => {
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => toast.remove(), 300);
+        removeToast(toast);
     }, duration);
+}
+
+function removeToast(toastElement) {
+    if (toastElement && toastElement.parentNode) {
+        toastElement.style.transform = 'translateX(100%)';
+        toastElement.style.opacity = '0';
+        setTimeout(() => {
+            if (toastElement.parentNode) {
+                toastElement.remove();
+            }
+        }, 300);
+    }
 }
 
 // Funciones globales para debugging

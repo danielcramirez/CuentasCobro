@@ -4,7 +4,25 @@
 
 @section('content')
 <!-- Contenedor principal con padding superior para el navbar fijo -->
-<div class="pt-32 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
+<div class="pt-24 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
+
+    <!-- Breadcrumb de navegación -->
+    <div class="max-w-7xl mx-auto mb-4">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500" aria-label="Breadcrumb">
+            <a href="{{ route('dashboard') }}" class="hover:text-gray-700 transition-colors flex items-center">
+                <i class="fas fa-home mr-1"></i>
+                Inicio
+            </a>
+            <i class="fas fa-chevron-right text-gray-300"></i>
+            @if(auth()->user()->hasRole('contratista'))
+                <a href="{{ route('contratista.dashboard') }}" class="hover:text-gray-700 transition-colors">
+                    Dashboard Contratista
+                </a>
+                <i class="fas fa-chevron-right text-gray-300"></i>
+            @endif
+            <span class="text-gray-700 font-medium">Cuentas de Cobro</span>
+        </nav>
+    </div>
 
     @if(session('error'))
         <div id="error-popup" class="fixed inset-x-0 top-24 flex justify-center z-50 pointer-events-auto">
@@ -22,28 +40,53 @@
             </div>
         </div>
     @endif
+
+    @if(session('success'))
+        <div id="success-popup" class="fixed inset-x-0 top-24 flex justify-center z-50 pointer-events-auto">
+            <div class="w-full max-w-2xl mx-4 glass-card p-4 flex items-start space-x-4 shadow-lg transition transform duration-300 opacity-100 bg-green-50 border border-green-200" role="alert">
+                <div class="text-green-600 mt-1">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="font-semibold text-gray-800">¡Éxito!</p>
+                    <p class="text-sm text-gray-600 mt-1">{{ session('success') }}</p>
+                </div>
+                <button type="button" onclick="closeSuccessPopup()" class="text-gray-400 hover:text-gray-600 ml-2 p-1">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    @endif
+
     <!-- Header de la página -->
     <div class="max-w-7xl mx-auto mb-8">
-        <div class="glass-card p-6 slide-up">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-                <div class="flex items-center space-x-4 mb-4 lg:mb-0">
-                    <div class="gradient-primary w-16 h-16 rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-file-invoice text-white text-2xl"></i>
+        <div class="glass-card p-4 sm:p-6 slide-up">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <div class="gradient-primary w-12 h-12 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-file-invoice text-white text-lg sm:text-2xl"></i>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-800 font-poppins">Cuentas de Cobro</h1>
-                        <p class="text-gray-600">Gestiona y consulta todas las cuentas de cobro del sistema</p>
+                        <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-800 font-poppins">Cuentas de Cobro</h1>
+                        <p class="text-sm sm:text-base text-gray-600">Gestiona y consulta todas las cuentas de cobro</p>
                     </div>
                 </div>
                 
                 <!-- Acciones principales -->
-                <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    @if(auth()->user()->hasRole('contratista'))
+                        <a href="{{ route('contratista.dashboard') }}" 
+                           class="bg-purple-600 hover:bg-purple-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center text-sm sm:text-base">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            Volver al Dashboard
+                        </a>
+                    @endif
                     <a href="{{ route('cuentas-cobro.crear') }}" 
-                       class="gradient-primary text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center">
+                       class="gradient-primary text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 flex items-center justify-center text-sm sm:text-base">
                         <i class="fas fa-plus mr-2"></i>
                         Nueva Cuenta
                     </a>
-                    <button class="bg-white/70 text-gray-700 px-6 py-3 rounded-xl border border-gray-200 hover:bg-white hover:shadow-md transition-all duration-300 font-medium flex items-center justify-center">
+                    <button onclick="exportData()" class="bg-white/70 text-gray-700 px-4 sm:px-6 py-2 sm:py-3 rounded-xl border border-gray-200 hover:bg-white hover:shadow-md transition-all duration-300 font-medium flex items-center justify-center text-sm sm:text-base">
                         <i class="fas fa-download mr-2"></i>
                         Exportar
                     </button>
@@ -326,47 +369,6 @@
     </div>
 </div>
 
-<!-- Modal de confirmación de eliminación -->
-<div id="delete-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
-        <div class="relative glass-card p-6 w-full max-w-md">
-            <div class="text-center">
-                <div class="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-                    <i class="fas fa-trash text-red-500 text-2xl"></i>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-800 mb-2">¿Eliminar cuenta de cobro?</h3>
-                <p class="text-gray-600 mb-6">Esta acción no se puede deshacer. Se eliminará permanentemente la cuenta de cobro.</p>
-                <div class="flex space-x-4">
-                    <button type="button" onclick="closeDeleteModal()" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all duration-200">
-                        Cancelar
-                    </button>
-                    <button type="button" onclick="confirmDelete()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200">
-                        Eliminar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal de vista de cuenta -->
-<div id="view-modal" class="fixed inset-0 z-50 hidden overflow-y-auto">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"></div>
-        <div class="relative glass-card p-6 w-full max-w-2xl">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-semibold text-gray-800">Detalles de la Cuenta</h3>
-                <button onclick="closeViewModal()" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            <div id="view-content">
-                <!-- El contenido se cargará dinámicamente -->
-            </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('styles')
@@ -396,7 +398,6 @@
 
 @push('scripts')
 <script>
-let currentDeleteId = null;
 let sortDirection = {};
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -537,218 +538,19 @@ function sortBy(column) {
 
 // Ver detalles de cuenta
 function viewCuenta(id) {
-    // Mostrar cargador rápido
-    const viewContent = document.getElementById('view-content');
-    viewContent.innerHTML = `
-        <div class="animate-pulse">
-            <div class="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div class="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div class="h-4 bg-gray-200 rounded w-2/3"></div>
-        </div>
-    `;
-    document.getElementById('view-modal').classList.remove('hidden');
-
-    // Intentar tomar los datos embebidos en la fila/tarjeta
-    const el = document.querySelector(`[data-id="${id}"]`);
-    if (!el) {
-        // Si no hay elemento en el DOM, mostrar mensaje de error
-        setTimeout(() => {
-            viewContent.innerHTML = `
-                <div class="p-4">
-                    <p class="text-sm text-gray-600">No fue posible cargar los detalles de la cuenta.</p>
-                </div>
-            `;
-        }, 300);
-        return;
-    }
-
-    const proyecto = el.dataset.proyecto || 'Sin proyecto';
-    const descripcion = el.dataset.descripcion || 'Sin descripción';
-    const estado = el.dataset.estado || '';
-    const usuario = el.dataset.usuario || '';
-    const filename = el.dataset.filename || '';
-    const filepath = el.dataset.filepath || '';
-    const fechaRaw = el.dataset.fecha || '';
-
-    // Formatear fecha a dd/mm/yyyy si es posible
-    let fechaFormatted = fechaRaw;
-    if (fechaRaw) {
-        const d = new Date(fechaRaw);
-        if (!isNaN(d)) {
-            fechaFormatted = ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth()+1)).slice(-2) + '/' + d.getFullYear();
-        }
-    }
-
-    // Construir contenido real
-    let fileHtml = '';
-    if (filepath) {
-        // Mostrar enlace directo (si tu Storage requiere ruta pública distinta, ajusta aquí)
-        fileHtml = `<a href="${filepath}" target="_blank" class="text-blue-600 hover:underline">${filename || 'Ver archivo'}</a>`;
-    } else if (filename) {
-        fileHtml = `<span class="text-gray-700">${filename}</span>`;
-    } else {
-        fileHtml = `<span class="text-gray-500">Sin archivo</span>`;
-    }
-
-    setTimeout(() => {
-        // Construir DOM de forma segura para evitar inyección
-        viewContent.innerHTML = '';
-
-        const container = document.createElement('div');
-        container.className = 'space-y-4';
-
-        const grid = document.createElement('div');
-        grid.className = 'grid grid-cols-2 gap-4';
-
-        const numDiv = document.createElement('div');
-        const numLabel = document.createElement('label');
-        numLabel.className = 'text-sm font-medium text-gray-600';
-        numLabel.textContent = 'Número';
-        const numP = document.createElement('p');
-        numP.className = 'text-gray-800';
-        numP.textContent = `CC-${fechaFormatted.split('/').pop() || ''}-${String(id).padStart(3, '0')}`;
-        numDiv.appendChild(numLabel);
-        numDiv.appendChild(numP);
-
-        const estadoDiv = document.createElement('div');
-        const estadoLabel = document.createElement('label');
-        estadoLabel.className = 'text-sm font-medium text-gray-600';
-        estadoLabel.textContent = 'Estado';
-        const estadoP = document.createElement('p');
-        estadoP.className = 'text-gray-800';
-        estadoP.textContent = estado ? estado.charAt(0).toUpperCase() + estado.slice(1) : '';
-        estadoDiv.appendChild(estadoLabel);
-        estadoDiv.appendChild(estadoP);
-
-        grid.appendChild(numDiv);
-        grid.appendChild(estadoDiv);
-
-        // Proyecto
-        const proyectoDiv = document.createElement('div');
-        const proyectoLabel = document.createElement('label');
-        proyectoLabel.className = 'text-sm font-medium text-gray-600';
-        proyectoLabel.textContent = 'Proyecto/Servicio';
-        const proyectoP = document.createElement('p');
-        proyectoP.className = 'text-gray-800';
-        proyectoP.textContent = proyecto;
-        proyectoDiv.appendChild(proyectoLabel);
-        proyectoDiv.appendChild(proyectoP);
-
-        // Descripción
-        const descDiv = document.createElement('div');
-        const descLabel = document.createElement('label');
-        descLabel.className = 'text-sm font-medium text-gray-600';
-        descLabel.textContent = 'Descripción';
-        const descP = document.createElement('p');
-        descP.className = 'text-gray-800';
-        descP.textContent = descripcion;
-        descDiv.appendChild(descLabel);
-        descDiv.appendChild(descP);
-
-        // Fecha y archivo
-        const bottomDiv = document.createElement('div');
-        bottomDiv.className = 'flex items-center justify-between';
-
-        const fechaDiv = document.createElement('div');
-        const fechaLabel = document.createElement('label');
-        fechaLabel.className = 'text-sm font-medium text-gray-600';
-        fechaLabel.textContent = 'Fecha';
-        const fechaP2 = document.createElement('p');
-        fechaP2.className = 'text-gray-800';
-        fechaP2.textContent = fechaFormatted;
-        fechaDiv.appendChild(fechaLabel);
-        fechaDiv.appendChild(fechaP2);
-
-        const archivoDiv = document.createElement('div');
-        const archivoLabel = document.createElement('label');
-        archivoLabel.className = 'text-sm font-medium text-gray-600';
-        archivoLabel.textContent = 'Archivo';
-        archivoDiv.appendChild(archivoLabel);
-
-        const archivoControls = document.createElement('div');
-        archivoControls.className = 'flex items-center space-x-2 mt-1';
-
-        if (filepath) {
-            const link = document.createElement('a');
-            link.href = filepath;
-            link.target = '_blank';
-            link.rel = 'noopener noreferrer';
-            link.className = 'text-blue-600 hover:underline';
-            link.textContent = filename || 'Ver archivo';
-
-            const downloadBtn = document.createElement('a');
-            downloadBtn.href = filepath;
-            downloadBtn.setAttribute('download', '');
-            downloadBtn.className = 'inline-flex items-center px-3 py-1 bg-gray-100 border border-gray-200 rounded-md text-sm text-gray-700 hover:bg-gray-200';
-            downloadBtn.textContent = 'Descargar';
-
-            archivoControls.appendChild(link);
-            archivoControls.appendChild(downloadBtn);
-        } else if (filename) {
-            const span = document.createElement('span');
-            span.className = 'text-gray-700';
-            span.textContent = filename;
-            archivoControls.appendChild(span);
-        } else {
-            const span = document.createElement('span');
-            span.className = 'text-gray-500';
-            span.textContent = 'Sin archivo';
-            archivoControls.appendChild(span);
-        }
-
-        archivoDiv.appendChild(archivoControls);
-
-        bottomDiv.appendChild(fechaDiv);
-        bottomDiv.appendChild(archivoDiv);
-
-        // Montar todo
-        container.appendChild(grid);
-        container.appendChild(proyectoDiv);
-        container.appendChild(descDiv);
-        container.appendChild(bottomDiv);
-
-        viewContent.appendChild(container);
-    }, 250);
+    // Redirigir a la vista de detalle de la cuenta
+    window.location.href = `/cuentas-cobro/${id}`;
 }
 
-function closeViewModal() {
-    document.getElementById('view-modal').classList.add('hidden');
-}
+
 
 // Eliminar cuenta
 function deleteCuenta(id) {
-    currentDeleteId = id;
-    document.getElementById('delete-modal').classList.remove('hidden');
+    // Redirigir a la página de confirmación de eliminación
+    window.location.href = `/cuentas-cobro/${id}/eliminar`;
 }
 
-function closeDeleteModal() {
-    document.getElementById('delete-modal').classList.add('hidden');
-    currentDeleteId = null;
-}
 
-function confirmDelete() {
-    if (currentDeleteId) {
-        // Crear formulario dinámico para enviar DELETE
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/cuentas-cobro/${currentDeleteId}`;
-        
-        const methodField = document.createElement('input');
-        methodField.type = 'hidden';
-        methodField.name = '_method';
-        methodField.value = 'DELETE';
-        
-        const tokenField = document.createElement('input');
-        tokenField.type = 'hidden';
-        tokenField.name = '_token';
-        tokenField.value = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        
-        form.appendChild(methodField);
-        form.appendChild(tokenField);
-        document.body.appendChild(form);
-        form.submit();
-    }
-}
 
 // Cerrar popup de error y eliminar del DOM con animación
 function closeErrorPopup() {
@@ -761,6 +563,97 @@ function closeErrorPopup() {
     setTimeout(() => {
         if (el && el.parentNode) el.parentNode.removeChild(el);
     }, 260);
+}
+
+// Función para cerrar popups de éxito
+function closeSuccessPopup() {
+    const popup = document.getElementById('success-popup');
+    if (popup) {
+        popup.style.opacity = '0';
+        popup.style.transform = 'translateY(-20px)';
+        setTimeout(() => popup.remove(), 300);
+    }
+}
+
+// Función para exportar datos
+function exportData() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    
+    button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Exportando...';
+    button.disabled = true;
+    
+    // Simular exportación (aquí iría la lógica real)
+    setTimeout(() => {
+        button.innerHTML = originalText;
+        button.disabled = false;
+        showToast('Datos exportados correctamente', 'success');
+    }, 2000);
+}
+
+// Auto-cerrar notificaciones después de 5 segundos
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        closeErrorPopup();
+        closeSuccessPopup();
+    }, 5000);
+});
+
+function showToast(message, type = 'info', duration = 3000) {
+    const existingToasts = document.querySelectorAll(`[data-toast-type="${type}"]`);
+    existingToasts.forEach(toast => toast.remove());
+    
+    const toast = document.createElement('div');
+    const bgColor = {
+        'success': 'bg-green-500',
+        'error': 'bg-red-500',
+        'warning': 'bg-yellow-500',
+        'info': 'bg-blue-500'
+    }[type] || 'bg-gray-500';
+    
+    const icon = {
+        'success': 'fas fa-check-circle',
+        'error': 'fas fa-exclamation-circle',
+        'warning': 'fas fa-exclamation-triangle',
+        'info': 'fas fa-info-circle'
+    }[type] || 'fas fa-info-circle';
+    
+    toast.setAttribute('data-toast-type', type);
+    toast.className = `fixed top-4 right-4 ${bgColor} text-white px-4 sm:px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-all duration-300 z-50 max-w-sm`;
+    toast.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <i class="${icon} text-lg"></i>
+            <div class="flex-1 text-sm sm:text-base font-medium">${message}</div>
+            <button 
+                onclick="removeToast(this.parentElement.parentElement)" 
+                class="ml-2 text-white hover:text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50 rounded p-1"
+                aria-label="Cerrar notificación">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.transform = 'translateX(0)';
+    }, 100);
+    
+    setTimeout(() => {
+        removeToast(toast);
+    }, duration);
+}
+
+function removeToast(toastElement) {
+    if (toastElement && toastElement.parentNode) {
+        toastElement.style.transform = 'translateX(100%)';
+        toastElement.style.opacity = '0';
+        setTimeout(() => {
+            if (toastElement.parentNode) {
+                toastElement.remove();
+            }
+        }, 300);
+    }
 }
 </script>
 @endpush

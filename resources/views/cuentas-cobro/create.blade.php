@@ -4,6 +4,28 @@
 @section('content')
 <!-- Contenedor principal con padding superior para el navbar fijo -->
 <div class="pt-24 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
+    <!-- Breadcrumb de navegación -->
+    <div class="max-w-4xl mx-auto mb-4">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500" aria-label="Breadcrumb">
+            <a href="{{ route('dashboard') }}" class="hover:text-gray-700 transition-colors flex items-center">
+                <i class="fas fa-home mr-1"></i>
+                Inicio
+            </a>
+            <i class="fas fa-chevron-right text-gray-300"></i>
+            @if(auth()->user()->hasRole('contratista'))
+                <a href="{{ route('contratista.dashboard') }}" class="hover:text-gray-700 transition-colors">
+                    Dashboard Contratista
+                </a>
+                <i class="fas fa-chevron-right text-gray-300"></i>
+            @endif
+            <a href="{{ route('cuentas-cobro.mostrar') }}" class="hover:text-gray-700 transition-colors">
+                Cuentas de Cobro
+            </a>
+            <i class="fas fa-chevron-right text-gray-300"></i>
+            <span class="text-gray-700 font-medium">Crear Nueva</span>
+        </nav>
+    </div>
+    
     <!-- Header de la página -->
     <div class="max-w-4xl mx-auto mb-8">
         <div class="glass-card p-6 slide-up">
@@ -17,24 +39,37 @@
                         <p class="text-gray-600">Complete el formulario para generar una nueva solicitud de pago</p>
                     </div>
                 </div>
-                <!-- Breadcrumb de navegación -->
-                <nav class="hidden md:flex" aria-label="Breadcrumb">
+                <!-- Breadcrumb de navegación mejorado -->
+                <nav class="flex" aria-label="Breadcrumb">
                     <ol class="flex items-center space-x-2 text-sm">
                         <li>
-                            <a href="{{ route('dashboard') }}" class="text-gray-500 hover:text-gray-700 transition-colors">
-                                <i class="fas fa-home"></i>
+                            <a href="{{ route('dashboard') }}" class="text-gray-500 hover:text-gray-700 transition-colors flex items-center">
+                                <i class="fas fa-home mr-1"></i>
+                                <span class="hidden sm:inline">Inicio</span>
                             </a>
                         </li>
                         <li>
-                            <span class="text-gray-400">/</span>
+                            <i class="fas fa-chevron-right text-gray-300"></i>
                         </li>
+                        @if(auth()->user()->hasRole('contratista'))
+                        <li>
+                            <a href="{{ route('contratista.dashboard') }}" class="text-gray-500 hover:text-gray-700 transition-colors">
+                                <span class="hidden sm:inline">Dashboard Contratista</span>
+                                <span class="sm:hidden">Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <i class="fas fa-chevron-right text-gray-300"></i>
+                        </li>
+                        @endif
                         <li>
                             <a href="{{ route('cuentas-cobro.mostrar') }}" class="text-gray-500 hover:text-gray-700 transition-colors">
-                                Cuentas de Cobro
+                                <span class="hidden sm:inline">Cuentas de Cobro</span>
+                                <span class="sm:hidden">Cuentas</span>
                             </a>
                         </li>
                         <li>
-                            <span class="text-gray-400">/</span>
+                            <i class="fas fa-chevron-right text-gray-300"></i>
                         </li>
                         <li class="text-gray-900 font-medium">Crear</li>
                     </ol>
@@ -302,27 +337,40 @@
                     </div>
                 </div>
                 
-                <!-- Botones de acción -->
+                <!-- Botones de acción mejorados -->
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0 pt-8 border-t border-gray-200">
-                    <a href="{{ route('cuentas-cobro.mostrar') }}" 
-                       class="inline-flex items-center justify-center px-6 py-3 border-2 border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-medium">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Cancelar
-                    </a>
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        @if(auth()->user()->hasRole('contratista'))
+                            <a href="{{ route('contratista.dashboard') }}" 
+                               class="inline-flex items-center justify-center px-4 sm:px-6 py-3 border-2 border-purple-300 text-purple-700 bg-purple-50 rounded-xl hover:bg-purple-100 hover:border-purple-400 transition-all duration-300 font-medium text-sm sm:text-base">
+                                <i class="fas fa-home mr-2"></i>
+                                <span class="hidden sm:inline">Dashboard</span>
+                                <span class="sm:hidden">Inicio</span>
+                            </a>
+                        @endif
+                        <a href="{{ route('cuentas-cobro.mostrar') }}" 
+                           class="inline-flex items-center justify-center px-4 sm:px-6 py-3 border-2 border-gray-300 text-gray-700 bg-white rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-300 font-medium text-sm sm:text-base">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            <span class="hidden sm:inline">Cancelar</span>
+                            <span class="sm:hidden">Volver</span>
+                        </a>
+                    </div>
                     
-                    <div class="flex space-x-4">
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                         <button type="button" 
-                                class="inline-flex items-center justify-center px-6 py-3 border-2 border-blue-300 text-blue-700 bg-blue-50 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all duration-300 font-medium"
+                                class="inline-flex items-center justify-center px-4 sm:px-6 py-3 border-2 border-blue-300 text-blue-700 bg-blue-50 rounded-xl hover:bg-blue-100 hover:border-blue-400 transition-all duration-300 font-medium text-sm sm:text-base"
                                 id="draft-btn">
                             <i class="fas fa-save mr-2"></i>
-                            Guardar como Borrador
+                            <span class="hidden sm:inline">Guardar como Borrador</span>
+                            <span class="sm:hidden">Borrador</span>
                         </button>
                         
                         <button type="submit" 
-                                class="inline-flex items-center justify-center px-8 py-3 gradient-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300"
+                                class="inline-flex items-center justify-center px-6 sm:px-8 py-3 gradient-primary text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 text-sm sm:text-base"
                                 id="submit-btn">
                             <i class="fas fa-paper-plane mr-2"></i>
-                            Crear Cuenta de Cobro
+                            <span class="hidden sm:inline">Crear Cuenta de Cobro</span>
+                            <span class="sm:hidden">Crear</span>
                         </button>
                     </div>
                 </div>
