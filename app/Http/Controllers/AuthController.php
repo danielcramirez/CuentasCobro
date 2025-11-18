@@ -57,11 +57,11 @@ class AuthController extends Controller
             'userRoleDescription' => $user->role ? $user->role->description : 'Sin rol asignado'
         ];
 
-        $dashboardLink = 'dashboard.dashboard';
+        $dashboardLink = 'shared.dashboard-base';
 
         // Datos específicos para el alcalde
         if ($user->hasRole('alcalde')) {
-            $dashboardLink = 'dashboard.alcalde';
+            $dashboardLink = 'alcalde.dashboard';
             $dashboardData = array_merge($dashboardData, [
                 'totalUsers' => User::count(),
                 'totalRoles' => Roles::count(),
@@ -75,7 +75,7 @@ class AuthController extends Controller
 
         // Datos específicos para supervisor
         if ($user->hasRole('supervisor')) {
-            $dashboardLink = 'dashboard.supervisor';
+            $dashboardLink = 'supervisor.dashboard';
             $dashboardData = array_merge($dashboardData, [
                 'pendingReviews' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
                 'approvedToday' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
@@ -95,7 +95,7 @@ class AuthController extends Controller
 
         // Datos específicos para tesorería
         if ($user->hasRole('tesoreria')) {
-            $dashboardLink = 'dashboard.other_roles';
+            $dashboardLink = 'shared.other-roles';
             $dashboardData = array_merge($dashboardData, [
                 'pendingPayments' => CuentaCobro::where('estado', 'aprobado')->count(),
                 'paymentsToday' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
@@ -111,7 +111,7 @@ class AuthController extends Controller
 
         // Datos específicos para ordenador del gasto
         if ($user->hasRole('ordenador_gasto')) {
-            $dashboardLink = 'dashboard.other_roles';
+            $dashboardLink = 'shared.other-roles';
             $dashboardData = array_merge($dashboardData, [
                 'pendingAuthorizations' => CuentaCobro::where('estado', 'revision')->count(),
                 'authorizedToday' => CuentaCobro::where('estado', 'aprobado')
@@ -127,7 +127,7 @@ class AuthController extends Controller
 
         // Datos específicos para contratación
         if ($user->hasRole('contratacion')) {
-            $dashboardLink = 'dashboard.other_roles';
+            $dashboardLink = 'shared.other-roles';
             $dashboardData = array_merge($dashboardData, [
                 'activeContracts' => User::whereHas('role', function($query) {
                     $query->where('name', 'contratista');

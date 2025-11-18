@@ -40,12 +40,17 @@ class CuentaCobroController extends Controller
             }
         }
 
-        return view('cuentasCobro.mostrarCuenta', compact('cuentas'));
+        return view('cuentas-cobro.index', compact('cuentas'))->with([
+            'userRole' => $user->role ? $user->role->name : null
+        ]);
     }
 
     public function create()
     {
-        return view('cuentasCobro.crearCuenta');
+        $user = Auth::user();
+        return view('cuentas-cobro.create')->with([
+            'userRole' => $user->role ? $user->role->name : null
+        ]);
     }
 
     public function store(Request $request)
@@ -112,7 +117,9 @@ class CuentaCobroController extends Controller
                 ->with('error', 'Esta cuenta de cobro no puede ser editada en su estado actual (' . ucfirst($cuenta->estado) . '). Solo se pueden editar cuentas en estado Borrador o Rechazado.');
         }
         
-        return view('cuentasCobro.editarCuenta', compact('cuenta'));
+        return view('cuentas-cobro.edit', compact('cuenta'))->with([
+            'userRole' => $userRole
+        ]);
     }
 
     public function update(Request $request, $id)
@@ -152,6 +159,46 @@ class CuentaCobroController extends Controller
         $cuenta->save();
 
         return redirect()->route('cuentas-cobro.mostrar')->with('success', 'Cuenta de cobro actualizada exitosamente.');
+    }
+
+    public function show($id)
+    {
+        $cuenta = CuentaCobro::with('user')->findOrFail($id);
+        $user = Auth::user();
+        $userRole = optional($user->role)->name;
+        
+        // Verificar permisos - los usuarios solo pueden ver sus propias cuentas (excepto admin)
+        if ($userRole === 'contratista' && $cuenta->user_id !== $user->id) {
+            return redirect()->route('cuentas-cobro.mostrar')
+                ->with('error', 'No tienes permiso para ver esta cuenta de cobro.');
+        }
+        
+        return view('cuentas-cobro.show', compact('cuenta'))->with([
+            'userRole' => $userRole
+        ]);
+    }
+
+    public function confirmarEliminacion($id)
+    {
+        $cuenta = CuentaCobro::with('user')->findOrFail($id);
+        $user = Auth::user();
+        $userRole = optional($user->role)->name;
+        
+        // Verificar permisos - solo contratistas pueden eliminar sus propias cuentas
+        if ($userRole === 'contratista' && $cuenta->user_id !== $user->id) {
+            return redirect()->route('cuentas-cobro.mostrar')
+                ->with('error', 'No tienes permiso para eliminar esta cuenta de cobro.');
+        }
+        
+        // Solo permitir eliminar cuentas en borrador
+        if ($cuenta->estado !== CuentaCobro::ESTADO_BORRADOR) {
+            return redirect()->route('cuentas-cobro.mostrar')
+                ->with('error', 'Solo se pueden eliminar cuentas de cobro en estado borrador.');
+        }
+        
+        return view('cuentas-cobro.delete', compact('cuenta'))->with([
+            'userRole' => $userRole
+        ]);
     }
 
     public function destroy(CuentaCobro $cuenta, $id)
@@ -308,6 +355,281 @@ class CuentaCobroController extends Controller
             'Content-Type' => $mimeType,
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ]);
+    }
+
+    // ==========================================
+    // MÉTODOS ESPECÍFICOS PARA CONTRATISTA
+    // ==========================================
+
+    /**
+     * Vista index específica para contratistas
+     */
+    public function indexContratista(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Verificar que sea contratista
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $query = CuentaCobro::where('user_id', $user->id)->with('user');
+
+        // Filtros de búsqueda
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('proyecto_servicio', 'like', "%{$search}%")
+                  ->orWhere('descripcion', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Ordenar por fecha más reciente
+        $cuentas = $query->orderBy('created_at', 'desc')->paginate(15);
+
+        // Preparar información de archivos
+        foreach ($cuentas as $cuenta) {
+            $cuenta->archivo_url = null;
+            $cuenta->archivo_nombre = 'Sin archivo';
+            if ($cuenta->ruta_archivo) {
+                $cuenta->archivo_url = route('cuentas-cobro.descargar', $cuenta->id);
+                $cuenta->archivo_nombre = basename($cuenta->ruta_archivo);
+            }
+        }
+
+        return view('roles.contratista.cuentas.index', compact('cuentas'));
+    }
+
+    /**
+     * Formulario de creación para contratistas
+     */
+    public function createContratista()
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        return view('roles.contratista.cuentas.crear');
+    }
+
+    /**
+     * Almacenar cuenta de cobro del contratista
+     */
+    public function storeContratista(Request $request)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $request->validate([
+            'fecha_emision' => 'required|date',
+            'proyecto_servicio' => 'required|string|max:255',
+            'valor' => 'required|numeric|min:0',
+            'descripcion' => 'nullable|string',
+            'documentos.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png'
+        ]);
+
+        // Manejar archivos
+        $primerArchivoRuta = null;
+        $disk = config('filesystems.upload_disk', 'ftp');
+        
+        if ($request->hasFile('documentos')) {
+            foreach ($request->file('documentos') as $file) {
+                $nombre = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+                $ext = $file->getClientOriginalExtension();
+                $ruta = 'CuentasCobro/' . date('Y-m') . '/' . $user->id . '/' . $nombre . '-' . time() . '.' . $ext;
+                
+                $saved = Storage::disk($disk)->put($ruta, fopen($file->getRealPath(), 'r+'));
+                if ($saved && !$primerArchivoRuta) {
+                    $primerArchivoRuta = $ruta;
+                }
+            }
+        }
+
+        // Crear la cuenta de cobro
+        $cuenta = CuentaCobro::create([
+            'user_id' => $user->id,
+            'fecha_emision' => $request->fecha_emision,
+            'proyecto_servicio' => $request->proyecto_servicio,
+            'valor' => $request->valor,
+            'descripcion' => $request->descripcion,
+            'ruta_archivo' => $primerArchivoRuta,
+            'estado' => CuentaCobro::ESTADO_BORRADOR
+        ]);
+
+        return redirect()->route('contratista.cuentas.index')
+            ->with('success', 'Cuenta de cobro creada exitosamente como borrador. Puedes editarla antes de enviarla.');
+    }
+
+    /**
+     * Mostrar cuenta específica del contratista
+     */
+    public function showContratista($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::where('id', $id)
+                            ->where('user_id', $user->id)
+                            ->with('user')
+                            ->firstOrFail();
+
+        // Preparar archivo
+        $cuenta->archivo_url = null;
+        $cuenta->archivo_nombre = 'Sin archivo';
+        if ($cuenta->ruta_archivo) {
+            $cuenta->archivo_url = route('cuentas-cobro.descargar', $cuenta->id);
+            $cuenta->archivo_nombre = basename($cuenta->ruta_archivo);
+        }
+
+        return view('roles.contratista.cuentas.ver', compact('cuenta'));
+    }
+
+    /**
+     * Formulario de edición para contratistas
+     */
+    public function editContratista($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::where('id', $id)
+                            ->where('user_id', $user->id)
+                            ->firstOrFail();
+
+        // Solo se pueden editar borradores y rechazadas
+        if (!in_array($cuenta->estado, [CuentaCobro::ESTADO_BORRADOR, CuentaCobro::ESTADO_RECHAZADO])) {
+            return redirect()->route('contratista.cuentas.index')
+                ->with('error', 'Esta cuenta no puede ser editada en su estado actual: ' . ucfirst($cuenta->estado));
+        }
+
+        return view('roles.contratista.cuentas.editar', compact('cuenta'));
+    }
+
+    /**
+     * Actualizar cuenta del contratista
+     */
+    public function updateContratista(Request $request, $id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::where('id', $id)
+                            ->where('user_id', $user->id)
+                            ->firstOrFail();
+
+        if (!in_array($cuenta->estado, [CuentaCobro::ESTADO_BORRADOR, CuentaCobro::ESTADO_RECHAZADO])) {
+            return redirect()->route('contratista.cuentas.index')
+                ->with('error', 'Esta cuenta no puede ser editada en su estado actual.');
+        }
+
+        $request->validate([
+            'fecha_emision' => 'required|date',
+            'proyecto_servicio' => 'required|string|max:255',
+            'valor' => 'required|numeric|min:0',
+            'descripcion' => 'nullable|string',
+            'documentos.*' => 'nullable|file|max:10240|mimes:pdf,doc,docx,jpg,jpeg,png'
+        ]);
+
+        // Manejar nuevos archivos
+        if ($request->hasFile('documentos')) {
+            $disk = config('filesystems.upload_disk', 'ftp');
+            
+            foreach ($request->file('documentos') as $file) {
+                $nombre = Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME));
+                $ext = $file->getClientOriginalExtension();
+                $ruta = 'CuentasCobro/' . date('Y-m') . '/' . $user->id . '/' . $nombre . '-' . time() . '.' . $ext;
+                
+                $saved = Storage::disk($disk)->put($ruta, fopen($file->getRealPath(), 'r+'));
+                if ($saved) {
+                    $cuenta->ruta_archivo = $ruta;
+                }
+            }
+        }
+
+        // Actualizar datos
+        $cuenta->update([
+            'fecha_emision' => $request->fecha_emision,
+            'proyecto_servicio' => $request->proyecto_servicio,
+            'valor' => $request->valor,
+            'descripcion' => $request->descripcion,
+        ]);
+
+        return redirect()->route('contratista.cuentas.index')
+            ->with('success', 'Cuenta de cobro actualizada exitosamente.');
+    }
+
+    /**
+     * Confirmación de eliminación para contratistas
+     */
+    public function deleteContratista($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::where('id', $id)
+                            ->where('user_id', $user->id)
+                            ->firstOrFail();
+
+        // Solo se pueden eliminar borradores
+        if ($cuenta->estado !== CuentaCobro::ESTADO_BORRADOR) {
+            return redirect()->route('contratista.cuentas.index')
+                ->with('error', 'Solo se pueden eliminar cuentas en estado borrador.');
+        }
+
+        return view('roles.contratista.cuentas.eliminar', compact('cuenta'));
+    }
+
+    /**
+     * Eliminar cuenta del contratista
+     */
+    public function destroyContratista($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('contratista')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::where('id', $id)
+                            ->where('user_id', $user->id)
+                            ->firstOrFail();
+
+        if ($cuenta->estado !== CuentaCobro::ESTADO_BORRADOR) {
+            return redirect()->route('contratista.cuentas.index')
+                ->with('error', 'Solo se pueden eliminar cuentas en estado borrador.');
+        }
+
+        // Eliminar archivo si existe
+        if ($cuenta->ruta_archivo) {
+            $disk = config('filesystems.upload_disk', 'ftp');
+            Storage::disk($disk)->delete($cuenta->ruta_archivo);
+        }
+
+        $cuenta->delete();
+
+        return redirect()->route('contratista.cuentas.index')
+            ->with('success', 'Cuenta de cobro eliminada exitosamente.');
     }
 
 }
