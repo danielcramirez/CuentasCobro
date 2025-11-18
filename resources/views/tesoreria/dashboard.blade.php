@@ -26,13 +26,12 @@
 
 @section('dashboard-content')
     <!-- Estadísticas principales -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Cuentas pendientes de pago -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">        <!-- Cuentas pendientes de pago -->
         <div class="glass-card p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Pendientes de Pago</p>
-                    <p class="text-3xl font-bold text-gray-800" data-counter="{{ $cuentasAprobadas }}">{{ $cuentasAprobadas }}</p>
+                    <p class="text-3xl font-bold text-gray-800" data-counter="{{ $cuentasPorPagar }}">{{ $cuentasPorPagar }}</p>
                     <p class="text-sm text-blue-600 flex items-center mt-1">
                         <i class="fas fa-credit-card mr-1"></i>
                         Listas para procesar
@@ -43,16 +42,15 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Pagos realizados hoy -->
+          <!-- Pagos realizados hoy -->
         <div class="glass-card p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Pagos Hoy</p>
-                    <p class="text-3xl font-bold text-gray-800" data-counter="{{ $pagosHoy }}">{{ $pagosHoy }}</p>
+                    <p class="text-3xl font-bold text-gray-800" data-counter="{{ $estadisticasMes['pagos_realizados'] }}">{{ $estadisticasMes['pagos_realizados'] }}</p>
                     <p class="text-sm text-green-600 flex items-center mt-1">
                         <i class="fas fa-check-circle mr-1"></i>
-                        ${{ number_format($valorPagadoHoy, 0, ',', '.') }}
+                        ${{ number_format($estadisticasMes['valor_pagado_mes'], 0, ',', '.') }}
                     </p>
                 </div>
                 <div class="bg-gradient-to-br from-green-400 to-green-600 w-12 h-12 rounded-xl flex items-center justify-center">
@@ -60,13 +58,12 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Total pagado -->
+          <!-- Total pagado -->
         <div class="glass-card p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm text-gray-600 mb-1">Total Pagado</p>
-                    <p class="text-2xl font-bold text-gray-800">${{ number_format($valorTotalPagado, 0, ',', '.') }}</p>
+                    <p class="text-2xl font-bold text-gray-800">${{ number_format($valorPagado, 0, ',', '.') }}</p>
                     <p class="text-sm text-purple-600 flex items-center mt-1">
                         <i class="fas fa-dollar-sign mr-1"></i>
                         {{ $cuentasPagadas }} cuentas
@@ -166,10 +163,9 @@
             
             <div class="relative h-64">
                 <canvas id="pagosChart" class="w-full h-full"></canvas>
-            </div>
-              <!-- Datos del gráfico para JavaScript -->
+            </div>            <!-- Datos del gráfico para JavaScript -->
             <script>
-                window.pagosData = @json($pagosPorDia);
+                window.pagosData = @json($evolucionPagos);
             </script>
         </div>
 
@@ -242,11 +238,10 @@
                 </h3>
                 <a href="{{ route('tesoreria.pagos-realizados') }}" class="text-sm text-blue-600 hover:text-blue-800 font-medium">
                     Ver todos <i class="fas fa-arrow-right ml-1"></i>
-                </a>
-            </div>
-              @if($ultimasCuentasPagadas->count() > 0)
+                </a>            </div>
+              @if($pagosRecientes->count() > 0)
                 <div class="space-y-4">
-                    @foreach($ultimasCuentasPagadas as $pago)
+                    @foreach($pagosRecientes as $pago)
                         <div class="flex items-center space-x-4 p-3 bg-green-50 rounded-xl hover:bg-green-100 transition-colors">
                             <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
                                 <span class="text-white font-bold text-sm">
