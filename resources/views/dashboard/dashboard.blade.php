@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Contenedor principal del dashboard con padding superior para el navbar fijo -->
-<div class="pt-24 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
+<div class="pt-32 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
     <!-- Header del dashboard con animación -->
     <div class="max-w-7xl mx-auto mb-8">
         <div class="glass-card p-6 slide-up">
@@ -686,11 +686,9 @@
     .fade-in {
         animation: fadeInUp 0.6s ease-out;
     }
-    
     .slide-up {
         animation: slideUp 0.8s ease-out;
     }
-    
     @keyframes fadeInUp {
         from {
             opacity: 0;
@@ -701,7 +699,6 @@
             transform: translateY(0);
         }
     }
-    
     @keyframes slideUp {
         from {
             opacity: 0;
@@ -712,28 +709,30 @@
             transform: translateY(0);
         }
     }
-    
     /* Efecto parallax suave para las tarjetas */
     .glass-card:hover {
         transform: translateY(-5px) scale(1.02);
     }
-    
     /* Gradientes adicionales */
     .gradient-stats-1 {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     }
-    
     .gradient-stats-2 {
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     }
-    
     .gradient-stats-3 {
         background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
     }
-    
     .gradient-stats-4 {
         background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
     }
+    /* Ajuste extra para evitar solapamiento con navbar fijo en pantallas pequeñas */
+    @media (max-width: 768px) {
+        .pt-32 {
+            padding-top: 7rem !important;
+        }
+    }
+</style>
 </style>
 @endpush
 

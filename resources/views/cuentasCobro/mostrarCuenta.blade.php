@@ -4,7 +4,7 @@
 
 @section('content')
 <!-- Contenedor principal con padding superior para el navbar fijo -->
-<div class="pt-24 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
+<div class="pt-32 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
     <!-- Header de la página -->
     <div class="max-w-7xl mx-auto mb-8">
         <div class="glass-card p-6 slide-up">
@@ -351,17 +351,21 @@
     .cuenta-row, .cuenta-card {
         transition: all 0.3s ease;
     }
-    
     .cuenta-row:hover, .cuenta-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-    
     /* Animaciones de filtrado */
     .hidden-row {
         opacity: 0;
         transform: scale(0.95);
         pointer-events: none;
+    }
+    /* Ajuste extra para evitar solapamiento con navbar fijo en pantallas pequeñas */
+    @media (max-width: 768px) {
+        .pt-32 {
+            padding-top: 7rem !important;
+        }
     }
 </style>
 @endpush
