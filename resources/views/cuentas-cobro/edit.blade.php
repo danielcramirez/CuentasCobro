@@ -3,15 +3,15 @@
 @section('title', 'Editar Cuenta de Cobro - CuentasCobro')
 
 @section('content')
-<x-breadcrumbs 
-    :items="[
-        ['name' => 'Inicio', 'route' => auth()->user()->hasRole('contratista') ? 'contratista.dashboard' : 'dashboard'],
-        ['name' => 'Cuentas de Cobro', 'route' => 'cuentas-cobro.mostrar'],
-        ['name' => 'Editar Cuenta #' . $cuenta->id]
-    ]" 
-/>
-<div class="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
+<div class="pt-32 pb-8 px-4 sm:px-6 lg:px-8 min-h-screen">
     <div class="max-w-4xl mx-auto">
+        <x-breadcrumbs 
+            :items="[
+                ['name' => 'Inicio', 'route' => auth()->user()->hasRole('contratista') ? 'contratista.dashboard' : 'dashboard'],
+                ['name' => 'Cuentas de Cobro', 'route' => 'cuentas-cobro.mostrar'],
+                ['name' => 'Editar Cuenta #' . $cuenta->id]
+            ]" 
+        />
 
         <!-- Header mejorado -->
         <div class="glass-card p-6 mb-8 slide-up">
@@ -173,22 +173,25 @@
                     <div class="text-gray-500 text-sm" id="valor_formato">Formato: 0,000.00</div>
                 </div>
 
+                </div>
+
                 <!-- Archivo Adjunto Actual -->
                 @if($cuenta->archivo_adjunto)
-                <div class="col-span-1 lg:col-span-2 space-y-2">
+                <div class="space-y-2" id="archivoActualContainer">
                     <label class="block text-sm font-semibold text-gray-700">
-                        <i class="fas fa-file-pdf mr-2 text-red-500"></i>
+                        <i class="fas fa-file-check mr-2 text-green-500"></i>
                         Archivo Actual
                     </label>
-                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
+                    <div class="bg-green-50 border-2 border-green-300 rounded-xl p-4">
                         <div class="flex items-center justify-between flex-wrap gap-3">
                             <div class="flex items-center space-x-3">
-                                <div class="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                                <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
                                     <i class="fas fa-file-pdf text-white text-xl"></i>
                                 </div>
                                 <div>
-                                    <p class="font-medium text-gray-800">{{ basename($cuenta->archivo_adjunto) }}</p>
+                                    <p class="font-bold text-gray-800">{{ basename($cuenta->archivo_adjunto) }}</p>
                                     <p class="text-sm text-gray-600">
+                                        <i class="fas fa-clock mr-1"></i>
                                         Subido el {{ $cuenta->created_at->format('d/m/Y H:i') }}
                                     </p>
                                 </div>
@@ -201,28 +204,35 @@
                                     Ver
                                 </a>
                                 <button type="button"
-                                        onclick="confirmarBorrarArchivo()"
+                                        onclick="eliminarArchivo({{ $cuenta->id }})"
                                         class="inline-flex items-center px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm">
                                     <i class="fas fa-trash mr-1"></i>
-                                    Borrar
+                                    Eliminar
                                 </button>
                             </div>
                         </div>
                     </div>
-                    <input type="hidden" name="borrar_archivo" id="borrar_archivo" value="0">
                 </div>
                 @endif
 
-                <!-- Nuevo Archivo (Reemplazo) -->
+                <!-- Subir Archivo -->
                 <div class="col-span-1 lg:col-span-2 space-y-2">
                     <label for="archivo_adjunto" class="block text-sm font-semibold text-gray-700">
                         <i class="fas fa-upload mr-2 text-indigo-500"></i>
                         @if($cuenta->archivo_adjunto)
-                            Reemplazar Archivo (Opcional)
+                            <span class="text-orange-600">Reemplazar Archivo (Opcional)</span>
                         @else
-                            Subir Archivo
+                            <span class="text-red-600">Subir Archivo (Requerido)</span>
                         @endif
                     </label>
+                    @if($cuenta->archivo_adjunto)
+                        <div class="bg-blue-50 border-2 border-blue-300 rounded-lg p-3 mb-2">
+                            <p class="text-sm text-blue-800 font-medium">
+                                <i class="fas fa-info-circle mr-2"></i>
+                                <strong>Nota:</strong> Ya tienes un archivo cargado. Si subes uno nuevo, se reemplazará automáticamente.
+                            </p>
+                        </div>
+                    @endif
                     <div class="relative">
                         <input 
                             type="file" 
@@ -236,7 +246,7 @@
                     <p class="text-xs text-gray-500">
                         Formatos permitidos: PDF, DOC, DOCX, JPG, PNG (Máx. 10MB)
                         @if($cuenta->archivo_adjunto)
-                            <br><span class="text-blue-600 font-medium">Si subes un nuevo archivo, reemplazará el actual</span>
+                            <br><span class="text-blue-600 font-bold">✓ Si subes un nuevo archivo, reemplazará el actual</span>
                         @endif
                     </p>
                     <div class="text-red-500 text-sm hidden" id="archivo_error"></div>
@@ -305,37 +315,55 @@
 </div>
 
 <script>
-// Función para confirmar borrado de archivo
-function confirmarBorrarArchivo() {
-    if (confirm('¿Estás seguro de que deseas borrar el archivo actual? Esta acción no se puede deshacer.')) {
-        document.getElementById('borrar_archivo').value = '1';
-        
-        // Mostrar mensaje visual
-        const archivoActualDiv = document.querySelector('.from-blue-50');
-        if (archivoActualDiv) {
-            archivoActualDiv.classList.remove('from-blue-50', 'to-indigo-50', 'border-blue-200');
-            archivoActualDiv.classList.add('from-red-50', 'to-red-100', 'border-red-300');
-            
-            const iconDiv = archivoActualDiv.querySelector('.bg-red-500');
-            if (iconDiv) {
-                iconDiv.classList.remove('bg-red-500');
-                iconDiv.classList.add('bg-gray-400');
+// Función para eliminar archivo con AJAX
+function eliminarArchivo(cuentaId) {
+    if (!confirm('¿Estás seguro de que deseas eliminar el archivo actual?\n\nEsta acción no se puede deshacer.')) {
+        return;
+    }
+    
+    const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    fetch(`/cuentas-cobro/${cuentaId}/eliminar-archivo`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Eliminar el contenedor del archivo
+            const archivoContainer = document.getElementById('archivoActualContainer');
+            if (archivoContainer) {
+                archivoContainer.remove();
             }
             
-            // Agregar mensaje de confirmación
-            const mensaje = document.createElement('div');
-            mensaje.className = 'mt-2 p-2 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm';
-            mensaje.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>El archivo será borrado al guardar los cambios';
-            archivoActualDiv.appendChild(mensaje);
+            // Hacer el campo de archivo requerido
+            const archivoInput = document.getElementById('archivo_adjunto');
+            if (archivoInput) {
+                archivoInput.required = true;
+            }
             
-            // Deshabilitar botón de borrar
-            event.target.disabled = true;
-            event.target.classList.add('opacity-50', 'cursor-not-allowed');
+            // Actualizar el label
+            const labelSpan = document.querySelector('label[for="archivo_adjunto"] span');
+            if (labelSpan) {
+                labelSpan.textContent = 'Subir Archivo (Requerido)';
+                labelSpan.classList.remove('text-orange-600');
+                labelSpan.classList.add('text-red-600');
+            }
+            
+            // Mostrar mensaje de éxito
+            alert('✓ ' + data.message);
+        } else {
+            alert('❌ Error: ' + data.message);
         }
-        
-        // Hacer el campo de archivo requerido
-        document.getElementById('archivo_adjunto').required = true;
-    }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error al eliminar el archivo. Por favor, intenta nuevamente.');
+    });
 }
 
 document.addEventListener('DOMContentLoaded', function() {

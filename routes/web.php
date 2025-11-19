@@ -119,6 +119,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/{id}/cambiar-estado', [CuentaCobroController::class, 'cambiarEstado'])->name('cambiar-estado');
         Route::get('/estadisticas', [CuentaCobroController::class, 'estadisticas'])->name('estadisticas');
         Route::get('/{id}/descargar', [CuentaCobroController::class, 'descargar'])->name('descargar');
+        Route::delete('/{id}/eliminar-archivo', [CuentaCobroController::class, 'eliminarArchivo'])->name('eliminar-archivo');
         
         // Flujo de aprobación
         Route::post('/{id}/enviar-revision', [CuentaCobroController::class, 'enviarRevision'])->name('enviar-revision');

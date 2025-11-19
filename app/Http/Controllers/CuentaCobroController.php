@@ -201,6 +201,39 @@ class CuentaCobroController extends Controller
         return redirect()->route('cuentas-cobro.mostrar')->with('success', 'Cuenta de cobro actualizada exitosamente.');
     }
 
+    public function eliminarArchivo($id)
+    {
+        $user = Auth::user();
+        $cuenta = CuentaCobro::findOrFail($id);
+        $userRole = optional($user->role)->name;
+        
+        // Verificar permisos
+        if ($userRole === 'contratista' && $cuenta->user_id !== $user->id) {
+            return response()->json(['success' => false, 'message' => 'No tienes permiso para eliminar este archivo.'], 403);
+        }
+        
+        // Solo permitir eliminar si está en borrador o rechazada
+        if (!in_array($cuenta->estado, ['borrador', 'rechazada'])) {
+            return response()->json(['success' => false, 'message' => 'Solo puedes eliminar archivos de cuentas en estado borrador o rechazada.'], 403);
+        }
+        
+        // Verificar que exista archivo
+        if (!$cuenta->archivo_adjunto) {
+            return response()->json(['success' => false, 'message' => 'No hay archivo para eliminar.'], 404);
+        }
+        
+        // Eliminar archivo del storage
+        if (Storage::disk('public')->exists($cuenta->archivo_adjunto)) {
+            Storage::disk('public')->delete($cuenta->archivo_adjunto);
+        }
+        
+        // Actualizar base de datos
+        $cuenta->archivo_adjunto = null;
+        $cuenta->save();
+        
+        return response()->json(['success' => true, 'message' => 'Archivo eliminado exitosamente.']);
+    }
+
     public function show($id)
     {
         $cuenta = CuentaCobro::with('user')->findOrFail($id);
