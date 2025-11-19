@@ -217,7 +217,7 @@ class ContratacionController extends Controller
             $cuenta->archivo_nombre = basename($cuenta->ruta_archivo);
         }
 
-        return view('contratacion.cuentas-cobro.show', compact('cuenta'));
+        return view('cuentas-cobro.show', compact('cuenta'));
     }
 
     /**

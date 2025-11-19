@@ -155,7 +155,7 @@ class OrdenadorGastoController extends Controller
 
         $cuenta = CuentaCobro::with(['user'])->findOrFail($id);
         
-        return view('ordenador-gasto.show', compact('cuenta'));
+        return view('cuentas-cobro.show', compact('cuenta'));
     }
 
     /**
