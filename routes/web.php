@@ -10,6 +10,7 @@ use App\Http\Controllers\SupervisorController;
 use App\Http\Controllers\ContratacionController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TesoreriaController;
+use App\Http\Controllers\OrdenadorGastoController;
 
 // Ruta raíz redirige al login
 Route::get('/', function () {
@@ -190,21 +191,40 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['auth', 'check.role:tesoreria'])->prefix('tesoreria')->name('tesoreria.')->group(function () {
         // Dashboard de tesorería
         Route::get('/', [TesoreriaController::class, 'index'])->name('index');
-        Route::get('/dashboard', [TesoreriaController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [TesoreriaController::class, 'dashboard'])->name('dashboard');
         
-        // Gestión de cuentas
+        // Gestión de cuentas de cobro (en /tesoreria/cuentas - NO duplicar)
         Route::get('/cuentas', [TesoreriaController::class, 'cuentas'])->name('cuentas');
+        Route::get('/cuentas/{id}', [TesoreriaController::class, 'show'])->name('show');
+        Route::get('/cuentas/{id}/editar', [TesoreriaController::class, 'edit'])->name('edit');
+        Route::put('/cuentas/{id}', [TesoreriaController::class, 'update'])->name('update');
+        
+        // Otras vistas
         Route::get('/pagos-realizados', [TesoreriaController::class, 'pagosRealizados'])->name('pagos-realizados');
         Route::get('/cuentas-pendientes', [TesoreriaController::class, 'pendientes'])->name('pendientes');
         
-        // Acciones de pago y aprobación
+        // Acciones de pago
         Route::post('/marcar-pagada/{id}', [TesoreriaController::class, 'marcarPagada'])->name('marcarPagada');
-        Route::post('/estado/{id}', [TesoreriaController::class, 'actualizarEstado'])->name('actualizarEstado');
     });
 
     // API routes para tesorería (protegidas)
     Route::middleware(['auth', 'check.role:tesoreria'])->prefix('api/tesoreria')->name('api.tesoreria.')->group(function () {
         Route::get('/dashboard-data', [TesoreriaController::class, 'getDashboardData'])->name('dashboard');
+        Route::get('/weekly-evolution', [TesoreriaController::class, 'getWeeklyEvolution'])->name('weekly-evolution');
+        Route::get('/average-review-time', [TesoreriaController::class, 'getAverageReviewTime'])->name('average-review-time');
+    });
+
+    // Rutas específicas para ordenador de gasto
+    Route::middleware(['auth', 'check.role:ordenador_gasto'])->prefix('ordenador-gasto')->name('ordenador-gasto.')->group(function () {
+        // Dashboard de ordenador de gasto
+        Route::get('/', [OrdenadorGastoController::class, 'index'])->name('index');
+        Route::get('/dashboard', [OrdenadorGastoController::class, 'dashboard'])->name('dashboard');
+        
+        // Gestión de cuentas de cobro
+        Route::get('/cuentas', [OrdenadorGastoController::class, 'cuentas'])->name('cuentas');
+        Route::get('/cuentas/{id}', [OrdenadorGastoController::class, 'show'])->name('show');
+        Route::get('/cuentas/{id}/editar', [OrdenadorGastoController::class, 'edit'])->name('edit');
+        Route::put('/cuentas/{id}', [OrdenadorGastoController::class, 'update'])->name('update');
     });
 
 // Rutas adicionales que requieren roles específicos (placeholders para futuro uso)
