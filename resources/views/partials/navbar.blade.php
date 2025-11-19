@@ -163,6 +163,11 @@
                 
                 <!-- User menu y mobile toggle -->
                 <div class="flex items-center space-x-4">
+                    {{-- Componente de Notificaciones --}}
+                    @auth
+                        @include('components.notifications')
+                    @endauth
+                    
                     <!-- User dropdown -->
                     <div class="relative group">
                         <button class="flex items-center space-x-3 px-4 py-2 rounded-xl hover:bg-white/50 transition-all duration-300">
