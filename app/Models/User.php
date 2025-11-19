@@ -96,6 +96,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Obtener las notificaciones del usuario
+     */
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
+
+    /**
+     * Obtener notificaciones no leídas
+     */
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->where('leida', false);
+    }
+
+    /**
      * Obtener estadísticas rápidas del usuario
      */
     public function getEstadisticasAttribute()
