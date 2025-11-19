@@ -14,10 +14,14 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            RoleSeeder::class,           // Primero los roles
-            AdminUserSeeder::class,      // Luego el usuario administrador
-            SupervisorUserSeeder::class, // Usuarios supervisores de prueba
-            TesoreriaUserSeeder::class,  // Usuarios de tesorería de prueba
+            RoleSeeder::class,              // Primero los roles
+            AdminUserSeeder::class,         // Usuario administrador
+            SupervisorUserSeeder::class,    // Usuarios supervisores
+            TesoreriaUserSeeder::class,     // Usuarios de tesorería
+            AlcaldeUserSeeder::class,       // Usuario alcalde
+            OrdenadorGastoUserSeeder::class, // Usuario ordenador del gasto
+            ContratistaUserSeeder::class,   // Usuario contratista
+            ContratacionUserSeeder::class,  // Usuario contratación
         ]);
     }
 }

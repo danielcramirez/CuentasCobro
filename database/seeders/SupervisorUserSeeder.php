@@ -28,12 +28,12 @@ class SupervisorUserSeeder extends Seeder
             [
                 'name' => 'Ana García Supervisor',
                 'email' => 'supervisor@cuentascobro.com',
-                'password' => 'supervisor123'
+                'password' => '12345678'
             ],
             [
                 'name' => 'Carlos Mendez',
                 'email' => 'carlos.supervisor@cuentascobro.com', 
-                'password' => 'supervisor123'
+                'password' => '12345678'
             ]
         ];
 
