@@ -46,26 +46,31 @@ class SupervisorController extends Controller
 
         // Estadísticas principales de cuentas de cobro
         $totalCuentas = CuentaCobro::count();
-        $cuentasPendientes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)->count();
-        $cuentasRevision = CuentaCobro::where('estado', CuentaCobro::ESTADO_REVISION)->count();
-        $cuentasAprobadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->count();
-        $cuentasRechazadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_RECHAZADO)->count();
-        $cuentasPagadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->count();
+        $cuentasPendientes = CuentaCobro::whereIn('estado', [
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+            CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+            CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
+        ])->count();
+        $cuentasRevision = CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR)->count();
+        $cuentasAprobadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->count();
+        $cuentasRechazadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_RECHAZADA)->count();
+        $cuentasPagadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->count();
 
         // Valores monetarios
         $valorTotalPendiente = CuentaCobro::whereIn('estado', [
-            CuentaCobro::ESTADO_PENDIENTE, 
-            CuentaCobro::ESTADO_REVISION
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+            CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+            CuentaCobro::ESTADO_PENDIENTE_ORDENADOR,
+            CuentaCobro::ESTADO_APROBADA
         ])->sum('valor');
         
-        $valorTotalAprobado = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->sum('valor');
-        $valorTotalPagado = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor');
+        $valorTotalAprobado = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->sum('valor');
+        $valorTotalPagado = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->sum('valor');
 
         // Cuentas recientes para revisión (últimas 10)
-        $cuentasRecientes = CuentaCobro::whereIn('estado', [
-            CuentaCobro::ESTADO_PENDIENTE, 
-            CuentaCobro::ESTADO_REVISION
-        ])
+        $cuentasRecientes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR)
             ->with(['user'])
             ->latest()
             ->limit(10)
@@ -84,11 +89,11 @@ class SupervisorController extends Controller
         $estadisticasMes = [
             'cuentas_mes' => CuentaCobro::whereMonth('created_at', $now->month)->count(),
             'valor_mes' => CuentaCobro::whereMonth('created_at', $now->month)->sum('valor'),
-            'aprobadas_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)
-                ->whereMonth('updated_at', $now->month)
+            'aprobadas_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)
+                ->whereMonth('aprobado_supervisor_at', $now->month)
                 ->count(),
-            'rechazadas_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_RECHAZADO)
-                ->whereMonth('updated_at', $now->month)
+            'rechazadas_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_RECHAZADA)
+                ->whereMonth('rechazado_at', $now->month)
                 ->count()
         ];
 
@@ -167,10 +172,12 @@ class SupervisorController extends Controller
         // Ordenar por prioridad: pendientes primero, luego por fecha
         $cuentas = $query->orderByRaw("
             CASE 
-                WHEN estado = 'pendiente' THEN 1
-                WHEN estado = 'revision' THEN 2
-                WHEN estado = 'rechazado' THEN 3
-                ELSE 4
+                WHEN estado = 'pendiente_supervisor' THEN 1
+                WHEN estado = 'pendiente_contratacion' THEN 2
+                WHEN estado = 'pendiente_tesoreria' THEN 3
+                WHEN estado = 'pendiente_ordenador' THEN 4
+                WHEN estado = 'rechazada' THEN 5
+                ELSE 6
             END
         ")
         ->orderBy('created_at', 'desc')
@@ -215,7 +222,31 @@ class SupervisorController extends Controller
     }
 
     /**
-     * Actualizar el estado de una cuenta de cobro
+     * Mostrar formulario de edición de una cuenta de cobro
+     */
+    public function editCuentaCobro($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('supervisor')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::with(['user'])->findOrFail($id);
+
+        // Preparar archivo
+        $cuenta->archivo_url = null;
+        $cuenta->archivo_nombre = 'Sin archivo';
+        if ($cuenta->ruta_archivo) {
+            $cuenta->archivo_url = route('cuentas-cobro.descargar', $cuenta->id);
+            $cuenta->archivo_nombre = basename($cuenta->ruta_archivo);
+        }
+
+        return view('supervisor.cuentas-cobro.edit', compact('cuenta'));
+    }
+
+    /**
+     * Actualizar una cuenta de cobro (solo campos editables, no estado)
      */
     public function updateCuentaCobro(Request $request, $id)
     {
@@ -226,34 +257,23 @@ class SupervisorController extends Controller
         }
 
         $request->validate([
-            'estado' => 'required|in:revision,aprobado,rechazado',
+            'proyecto_servicio' => 'required|string|max:500',
+            'valor' => 'required|numeric|min:0',
+            'fecha_emision' => 'required|date',
             'observaciones' => 'nullable|string|max:1000'
         ]);
 
         $cuenta = CuentaCobro::findOrFail($id);
-        
-        // Solo se pueden actualizar cuentas pendientes o en revisión
-        if (!in_array($cuenta->estado, [CuentaCobro::ESTADO_PENDIENTE, CuentaCobro::ESTADO_REVISION])) {
-            return redirect()->route('supervisor.cuentas-cobro.show', $id)
-                ->with('error', 'Esta cuenta no puede ser modificada en su estado actual.');
-        }
 
         $cuenta->update([
-            'estado' => $request->estado,
-            'descripcion' => $request->observaciones ? 
-                ($cuenta->descripcion . "\n\n--- Observaciones del Supervisor ---\n" . $request->observaciones) : 
-                $cuenta->descripcion
+            'proyecto_servicio' => $request->proyecto_servicio,
+            'valor' => $request->valor,
+            'fecha_emision' => $request->fecha_emision,
+            'observaciones' => $request->observaciones
         ]);
 
-        $mensaje = match($request->estado) {
-            'revision' => 'Cuenta marcada como en revisión.',
-            'aprobado' => 'Cuenta aprobada exitosamente.',
-            'rechazado' => 'Cuenta rechazada con observaciones.',
-            default => 'Estado actualizado.'
-        };
-
         return redirect()->route('supervisor.cuentas-cobro.show', $id)
-            ->with('success', $mensaje);
+            ->with('success', 'Cuenta de cobro actualizada exitosamente.');
     }
 
     /**
@@ -285,8 +305,13 @@ class SupervisorController extends Controller
         // Agregar estadísticas a cada contratista
         foreach ($contratistas as $contratista) {
             $contratista->total_cuentas = $contratista->cuentasCobro->count();
-            $contratista->pendientes = $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_PENDIENTE)->count();
-            $contratista->aprobadas = $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_APROBADO)->count();
+            $contratista->pendientes = $contratista->cuentasCobro->whereIn('estado', [
+                CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+                CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+                CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
+            ])->count();
+            $contratista->aprobadas = $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_APROBADA)->count();
             $contratista->valor_total = $contratista->cuentasCobro->sum('valor');
             $contratista->ultima_actividad = $contratista->cuentasCobro->max('created_at');
         }
@@ -314,11 +339,16 @@ class SupervisorController extends Controller
         // Estadísticas del contratista
         $estadisticas = [
             'total_cuentas' => $contratista->cuentasCobro->count(),
-            'pendientes' => $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
-            'aprobadas' => $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_APROBADO)->count(),
-            'rechazadas' => $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_RECHAZADO)->count(),
+            'pendientes' => $contratista->cuentasCobro->whereIn('estado', [
+                CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+                CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+                CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
+            ])->count(),
+            'aprobadas' => $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_APROBADA)->count(),
+            'rechazadas' => $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_RECHAZADA)->count(),
             'valor_total' => $contratista->cuentasCobro->sum('valor'),
-            'valor_aprobado' => $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_APROBADO)->sum('valor'),
+            'valor_aprobado' => $contratista->cuentasCobro->where('estado', CuentaCobro::ESTADO_APROBADA)->sum('valor'),
         ];
 
         // Cuentas recientes del contratista
@@ -349,7 +379,7 @@ class SupervisorController extends Controller
                     SUM(valor) as total_valor,
                     COUNT(CASE WHEN estado = ? THEN 1 END) as aprobadas,
                     COUNT(CASE WHEN estado = ? THEN 1 END) as rechazadas
-                ', [CuentaCobro::ESTADO_APROBADO, CuentaCobro::ESTADO_RECHAZADO])
+                ', [CuentaCobro::ESTADO_APROBADA, CuentaCobro::ESTADO_RECHAZADA])
                 ->first();
 
             $evolution[] = [
@@ -372,7 +402,7 @@ class SupervisorController extends Controller
         $notifications = [];
 
         // Cuentas urgentes pendientes de revisión
-        $urgentes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)
+        $urgentes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR)
             ->where('created_at', '<=', Carbon::now()->subDays(3))
             ->count();
 
@@ -388,23 +418,23 @@ class SupervisorController extends Controller
             ];
         }
 
-        // Cuentas en revisión
-        $enRevision = CuentaCobro::where('estado', CuentaCobro::ESTADO_REVISION)->count();
+        // Cuentas pendientes de supervisor
+        $enRevision = CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR)->count();
         if ($enRevision > 0) {
             $notifications[] = [
                 'type' => 'info',
                 'icon' => 'fas fa-search',
-                'title' => 'En proceso de revisión',
-                'message' => "Hay {$enRevision} cuenta(s) marcada(s) como en revisión",
-                'action' => route('supervisor.cuentas-cobro.index', ['estado' => 'revision']),
+                'title' => 'Pendientes de tu aprobación',
+                'message' => "Hay {$enRevision} cuenta(s) esperando tu aprobación",
+                'action' => route('supervisor.cuentas-cobro.index', ['estado' => 'pendiente_supervisor']),
                 'action_text' => 'Ver detalles',
                 'priority' => 'medium'
             ];
         }
 
-        // Cuentas aprobadas recientes
-        $aprobadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)
-            ->where('updated_at', '>=', Carbon::now()->subDays(7))
+        // Cuentas aprobadas recientes por supervisor
+        $aprobadas = CuentaCobro::whereNotNull('aprobado_supervisor_at')
+            ->where('aprobado_supervisor_at', '>=', Carbon::now()->subDays(7))
             ->count();
 
         if ($aprobadas > 0) {
@@ -413,7 +443,7 @@ class SupervisorController extends Controller
                 'icon' => 'fas fa-check-circle',
                 'title' => 'Cuentas aprobadas',
                 'message' => "Has aprobado {$aprobadas} cuenta(s) en los últimos 7 días",
-                'action' => route('supervisor.cuentas-cobro.index', ['estado' => 'aprobado']),
+                'action' => route('supervisor.cuentas-cobro.index'),
                 'action_text' => 'Ver listado',
                 'priority' => 'low'
             ];
@@ -433,13 +463,9 @@ class SupervisorController extends Controller
      */
     private function getAverageReviewTime()
     {
-        $reviewedCuentas = CuentaCobro::whereIn('estado', [
-            CuentaCobro::ESTADO_APROBADO, 
-            CuentaCobro::ESTADO_RECHAZADO
-        ])
-        ->whereNotNull('updated_at')
-        ->where('updated_at', '!=', 'created_at')
-        ->get();
+        $reviewedCuentas = CuentaCobro::whereNotNull('aprobado_supervisor_at')
+            ->orWhereNotNull('rechazado_at')
+            ->get();
 
         if ($reviewedCuentas->isEmpty()) {
             return null;
