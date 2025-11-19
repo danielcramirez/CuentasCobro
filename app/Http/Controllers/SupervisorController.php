@@ -218,7 +218,7 @@ class SupervisorController extends Controller
             $cuenta->archivo_nombre = basename($cuenta->ruta_archivo);
         }
 
-        return view('supervisor.cuentas-cobro.show', compact('cuenta'));
+        return view('cuentas-cobro.show', compact('cuenta'));
     }
 
     /**
