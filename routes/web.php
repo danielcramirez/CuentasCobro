@@ -7,7 +7,7 @@ use App\Http\Controllers\RolControler;
 use App\Http\Controllers\CuentaCobroController;
 use App\Http\Controllers\ContratistaDashboardController;
 use App\Http\Controllers\SupervisorController;
-use App\Http\Controllers\TesoreriaController;
+// use App\Http\Controllers\TesoreriaController;
 
 // Ruta raíz redirige al login
 Route::get('/', function () {
@@ -108,12 +108,12 @@ Route::middleware(['auth'])->group(function () {
         'update' => 'roles.update',
         'destroy' => 'roles.destroy'
     ]);
-
-    // Ruta personalizada para show (usando {role} en lugar de {id})
-    Route::get('/roles/{role}', [RolControler::class, 'show'])->name('roles.show');
     
-    // Rutas adicionales para gestión de roles y usuarios
+    // Rutas adicionales para gestión de roles y usuarios (DEBEN IR ANTES de la ruta dinámica {role})
     Route::prefix('roles')->name('roles.')->group(function () {
+        // Ver gestión de usuarios con roles
+        Route::get('/usuarios', [RolControler::class, 'showUsuarios'])->name('usuarios');
+        
         // Asignar/remover roles a usuarios (AJAX)
         Route::post('/assign-role', [RolControler::class, 'assignRole'])->name('assign');
         Route::post('/remove-role', [RolControler::class, 'removeRole'])->name('remove');
@@ -121,6 +121,9 @@ Route::middleware(['auth'])->group(function () {
         // Obtener usuarios sin rol (AJAX)
         Route::get('/users-without-role', [RolControler::class, 'getUsersWithoutRole'])->name('users.without.role');
     });
+
+    // Ruta personalizada para show (usando {role} en lugar de {id}) - DEBE IR AL FINAL
+    Route::get('/roles/{role}', [RolControler::class, 'show'])->name('roles.show');
     
     // Rutas adicionales que podrías necesitar más adelante
     Route::prefix('admin')->middleware(['auth', 'check.role:alcalde'])->name('admin.')->group(function () {
@@ -144,6 +147,8 @@ Route::middleware(['auth'])->group(function () {
 });
 
     // Rutas específicas para tesorería
+    // TODO: Crear TesoreriaController
+    /*
     Route::middleware(['auth', 'check.role:tesoreria'])->prefix('tesoreria')->name('tesoreria.')->group(function () {
         // Dashboard de tesorería
         Route::get('/', [TesoreriaController::class, 'index'])->name('index');
@@ -163,6 +168,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['auth', 'check.role:tesoreria'])->prefix('api/tesoreria')->name('api.tesoreria.')->group(function () {
         Route::get('/dashboard-data', [TesoreriaController::class, 'getDashboardData'])->name('dashboard');
     });
+    */
 
 // Rutas adicionales que requieren roles específicos (placeholders para futuro uso)
 // NOTA: Las rutas principales de dashboard están definidas arriba usando controladores

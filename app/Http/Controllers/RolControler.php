@@ -90,6 +90,31 @@ class RolControler extends Controller
     }
 
     /**
+     * Mostrar página de gestión de usuarios con roles
+     */
+    public function showUsuarios()
+    {
+        if (!Auth::user()->hasAnyRole(['alcalde', 'contratacion'])) {
+            return redirect('/dashboard')->with('error', 'No tienes permisos para gestionar usuarios.');
+        }
+
+        // Obtener todos los usuarios con sus roles
+        $usuarios = User::with('role')
+            ->orderBy('name')
+            ->paginate(15);
+
+        // Obtener todos los roles disponibles
+        $roles = Roles::orderBy('name')->get();
+
+        // Estadísticas
+        $totalUsuarios = User::count();
+        $usuariosSinRol = User::whereNull('role_id')->count();
+        $usuariosConRol = User::whereNotNull('role_id')->count();
+
+        return view('roles.usuarios', compact('usuarios', 'roles', 'totalUsuarios', 'usuariosSinRol', 'usuariosConRol'));
+    }
+
+    /**
      * Otros métodos del controlador...
      */
 

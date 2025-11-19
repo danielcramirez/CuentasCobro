@@ -393,7 +393,7 @@
                         </div>
                     </a>
                     
-                    <a href="#" class="group block">
+                    <a href="{{ route('roles.usuarios') }}" class="group block">
                         <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-xl border border-blue-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1">
                             <div class="flex items-center space-x-4">
                                 <div class="bg-gradient-to-br from-blue-500 to-indigo-600 w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
