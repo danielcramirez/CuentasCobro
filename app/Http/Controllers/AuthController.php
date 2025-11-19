@@ -109,19 +109,7 @@ class AuthController extends Controller
 
         // Datos específicos para contratación
         if ($user->hasRole('contratacion')) {
-            $dashboardLink = 'shared.other-roles';
-            $dashboardData = array_merge($dashboardData, [
-                'activeContracts' => User::whereHas('role', function($query) {
-                    $query->where('name', 'contratista');
-                })->count(),
-                'pendingContracts' => CuentaCobro::where('estado', CuentaCobro::ESTADO_BORRADOR)->count(),
-                'totalContractors' => User::whereHas('role', function($query) {
-                    $query->where('name', 'contratista');
-                })->count(),
-                'monthlyContracts' => CuentaCobro::whereMonth('created_at', now()->month)->count(),
-                'recentContracts' => CuentaCobro::with('user')
-                    ->latest()->limit(5)->get()
-            ]);
+            return redirect()->route('contratacion.dashboard');
         }
 
         return view($dashboardLink, $dashboardData);
