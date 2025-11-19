@@ -174,7 +174,6 @@
             </div>
 
             <!-- Usuarios con este rol -->
-            <!-- Usuarios con este rol -->
             <div class="glass-card p-6 mb-8">
                 <h5 class="text-lg font-bold text-green-700 mb-4 flex items-center">
                     <i class="fas fa-users mr-2"></i> Usuarios con este Rol
