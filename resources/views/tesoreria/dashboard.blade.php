@@ -106,6 +106,18 @@
             </div>
         </a>
         
+        <a href="{{ route('tesoreria.cuentas', ['estado' => 'pendiente_tesoreria']) }}" class="glass-card p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
+            <div class="flex items-center space-x-4">
+                <div class="bg-gradient-to-br from-orange-500 to-red-600 w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                    <i class="fas fa-clock text-white"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">Pendientes Tesorería</h3>
+                    <p class="text-sm text-gray-600">Revisar y aprobar</p>
+                </div>
+            </div>
+        </a>
+        
         <a href="{{ route('tesoreria.pagos-realizados') }}" class="glass-card p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
             <div class="flex items-center space-x-4">
                 <div class="bg-gradient-to-br from-green-500 to-emerald-600 w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -114,18 +126,6 @@
                 <div>
                     <h3 class="font-semibold text-gray-800 group-hover:text-green-600 transition-colors">Pagos Realizados</h3>
                     <p class="text-sm text-gray-600">Historial de pagos</p>
-                </div>
-            </div>
-        </a>
-        
-        <a href="{{ route('tesoreria.pendientes') }}" class="glass-card p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
-            <div class="flex items-center space-x-4">
-                <div class="bg-gradient-to-br from-orange-500 to-red-600 w-12 h-12 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <i class="fas fa-clock text-white"></i>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-gray-800 group-hover:text-orange-600 transition-colors">Cuentas Pendientes</h3>
-                    <p class="text-sm text-gray-600">Revisar y aprobar</p>
                 </div>
             </div>
         </a>

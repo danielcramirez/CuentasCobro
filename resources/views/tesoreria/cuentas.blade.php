@@ -57,10 +57,14 @@
                     <select name="estado" 
                             class="w-full py-3 px-4 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Todos los estados</option>
-                        <option value="pendiente" {{ request('estado') === 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-                        <option value="aprobado" {{ request('estado') === 'aprobado' ? 'selected' : '' }}>Aprobado</option>
-                        <option value="pagado" {{ request('estado') === 'pagado' ? 'selected' : '' }}>Pagado</option>
-                        <option value="rechazado" {{ request('estado') === 'rechazado' ? 'selected' : '' }}>Rechazado</option>
+                        <option value="borrador" {{ request('estado') === 'borrador' ? 'selected' : '' }}>Borrador</option>
+                        <option value="pendiente_supervisor" {{ request('estado') === 'pendiente_supervisor' ? 'selected' : '' }}>Pendiente Supervisor</option>
+                        <option value="pendiente_contratacion" {{ request('estado') === 'pendiente_contratacion' ? 'selected' : '' }}>Pendiente Contratación</option>
+                        <option value="pendiente_tesoreria" {{ request('estado') === 'pendiente_tesoreria' ? 'selected' : '' }}>Pendiente Tesorería</option>
+                        <option value="pendiente_ordenador" {{ request('estado') === 'pendiente_ordenador' ? 'selected' : '' }}>Pendiente Ordenador</option>
+                        <option value="aprobada" {{ request('estado') === 'aprobada' ? 'selected' : '' }}>Aprobada</option>
+                        <option value="rechazada" {{ request('estado') === 'rechazada' ? 'selected' : '' }}>Rechazada</option>
+                        <option value="pagada" {{ request('estado') === 'pagada' ? 'selected' : '' }}>Pagada</option>
                     </select>
                 </div>
                 
@@ -166,17 +170,22 @@
                                 
                                 <!-- Estado -->
                                 <td class="px-6 py-4">
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                        @if($cuenta->estado === 'pagado') bg-green-100 text-green-800
-                                        @elseif($cuenta->estado === 'aprobado') bg-blue-100 text-blue-800
-                                        @elseif($cuenta->estado === 'rechazado') bg-red-100 text-red-800
-                                        @elseif($cuenta->estado === 'revision') bg-yellow-100 text-yellow-800
-                                        @elseif($cuenta->estado === 'pendiente') bg-orange-100 text-orange-800
-                                        @else bg-gray-100 text-gray-800
-                                        @endif
-                                    ">
+                                    @php
+                                        $badges = [
+                                            'borrador' => 'bg-gray-100 text-gray-800',
+                                            'pendiente_supervisor' => 'bg-yellow-100 text-yellow-800',
+                                            'pendiente_contratacion' => 'bg-blue-100 text-blue-800',
+                                            'pendiente_tesoreria' => 'bg-orange-100 text-orange-800',
+                                            'pendiente_ordenador' => 'bg-purple-100 text-purple-800',
+                                            'aprobada' => 'bg-green-100 text-green-800',
+                                            'rechazada' => 'bg-red-100 text-red-800',
+                                            'pagada' => 'bg-indigo-100 text-indigo-800',
+                                        ];
+                                        $badgeClass = $badges[$cuenta->estado] ?? 'bg-gray-100 text-gray-800';
+                                    @endphp
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ $badgeClass }}">
                                         <i class="fas fa-circle text-xs mr-2"></i>
-                                        {{ strtoupper($cuenta->estado) }}
+                                        {{ ucfirst(str_replace('_', ' ', $cuenta->estado)) }}
                                     </span>
                                 </td>
                                 
@@ -200,15 +209,16 @@
                                 
                                 <!-- Acciones -->
                                 <td class="px-6 py-4 text-center">
-                                    <div class="flex items-center justify-center space-x-2">                                        <!-- Ver cuenta -->
-                                        <a href="{{ route('cuentas-cobro.ver', $cuenta->id) }}" 
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <!-- Ver cuenta -->
+                                        <a href="{{ route('tesoreria.show', $cuenta->id) }}" 
                                            class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors text-sm font-medium">
                                             <i class="fas fa-eye mr-1"></i>
                                             Ver
                                         </a>
                                         
                                         <!-- Marcar como pagada (solo si está aprobada) -->
-                                        @if($cuenta->estado === 'aprobado')
+                                        @if($cuenta->estado === 'aprobada')
                                             <button onclick="marcarPagada({{ $cuenta->id }})" 
                                                     class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-lg hover:bg-green-200 transition-colors text-sm font-medium">
                                                 <i class="fas fa-check mr-1"></i>
@@ -217,8 +227,8 @@
                                         @endif
                                         
                                         <!-- Descargar archivo -->
-                                        @if($cuenta->archivo_url)
-                                            <a href="{{ $cuenta->archivo_url }}" target="_blank"
+                                        @if($cuenta->archivo_adjunto)
+                                            <a href="{{ Storage::url($cuenta->archivo_adjunto) }}" target="_blank"
                                                class="inline-flex items-center px-3 py-1 bg-purple-100 text-purple-800 rounded-lg hover:bg-purple-200 transition-colors text-sm font-medium">
                                                 <i class="fas fa-download mr-1"></i>
                                                 PDF

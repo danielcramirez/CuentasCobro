@@ -122,9 +122,15 @@ class User extends Authenticatable
 
         return [
             'total_cuentas' => $this->cuentasCobro()->count(),
-            'pendientes' => $this->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
-            'aprobadas' => $this->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADO)->count(),
-            'valor_total_pagado' => $this->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor')
+            'pendientes' => $this->cuentasCobro()->whereIn('estado', [
+                CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+                CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+                CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
+            ])->count(),
+            'aprobadas' => $this->cuentasCobro()->where('estado', CuentaCobro::ESTADO_APROBADA)->count(),
+            'pagadas' => $this->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADA)->count(),
+            'valor_total_pagado' => $this->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADA)->sum('valor')
         ];
     }
 
@@ -145,7 +151,7 @@ class User extends Authenticatable
      */
     public function canViewAllCuentasCobro()
     {
-        return $this->hasAnyRole(['supervisor', 'ordenador_gasto', 'tesoreria', 'alcalde']);
+        return $this->hasAnyRole(['supervisor', 'ordenador_gasto', 'tesoreria', 'alcalde', 'contratacion']);
     }
 
     /**
@@ -153,7 +159,7 @@ class User extends Authenticatable
      */
     public function canApproveCuentasCobro()
     {
-        return $this->hasAnyRole(['supervisor', 'ordenador_gasto']);
+        return $this->hasAnyRole(['supervisor', 'ordenador_gasto', 'contratacion', 'tesoreria']);
     }
 
     /**

@@ -17,6 +17,14 @@ class TesoreriaController extends Controller
      */
     public function index()
     {
+        return $this->dashboard();
+    }
+
+    /**
+     * Dashboard de tesorería
+     */
+    public function dashboard()
+    {
         $user = Auth::user();
         
         // Verificar que el usuario sea de tesorería
@@ -25,7 +33,7 @@ class TesoreriaController extends Controller
         }
 
         // Obtener datos principales de tesorería
-        $dashboardData = $this->getTesoreriaData($user);
+        $dashboardData = $this->getTesoreriaDataPrivate($user);
         
         return view('tesoreria.dashboard', $dashboardData);
     }
@@ -33,35 +41,41 @@ class TesoreriaController extends Controller
     /**
      * Get all tesorería-specific data
      */
-    private function getTesoreriaData($user)
+    private function getTesoreriaDataPrivate($user)
     {
         $now = Carbon::now();
 
         // Estadísticas principales de pagos
         $totalCuentas = CuentaCobro::count();
-        $cuentasPorPagar = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->count();
-        $cuentasPagadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->count();
+        $cuentasPorPagar = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->count();
+        $cuentasPagadas = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->count();
         $cuentasPendientes = CuentaCobro::whereIn('estado', [
-            CuentaCobro::ESTADO_PENDIENTE, 
-            CuentaCobro::ESTADO_REVISION
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+            CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+            CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
         ])->count();
 
         // Valores monetarios
-        $valorPorPagar = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->sum('valor');
-        $valorPagado = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor');
+        $valorPorPagar = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->sum('valor');
+        $valorPagado = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->sum('valor');
         $valorTotal = CuentaCobro::sum('valor');
         $valorPendienteAprobacion = CuentaCobro::whereIn('estado', [
-            CuentaCobro::ESTADO_PENDIENTE, 
-            CuentaCobro::ESTADO_REVISION
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+            CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+            CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
         ])->sum('valor');
 
         // Cuentas listas para pago (aprobadas)
-        $cuentasListasPago = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)
+        $cuentasListasPago = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)
             ->with(['user'])
             ->orderBy('created_at', 'asc')
             ->limit(10)
-            ->get();        // Pagos realizados recientemente (últimos 10)
-        $pagosRecientes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+            ->get();
+        
+        // Pagos realizados recientemente (últimos 10)
+        $pagosRecientes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
             ->with(['user'])
             ->latest('updated_at')
             ->limit(10)
@@ -69,8 +83,10 @@ class TesoreriaController extends Controller
 
         // Cuentas pendientes para mostrar en dashboard (últimas 10)
         $cuentasPendientesPago = CuentaCobro::whereIn('estado', [
-            CuentaCobro::ESTADO_PENDIENTE, 
-            CuentaCobro::ESTADO_REVISION
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+            CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+            CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
         ])
             ->with(['user'])
             ->latest('created_at')
@@ -79,16 +95,16 @@ class TesoreriaController extends Controller
 
         // Estadísticas del mes actual
         $estadisticasMes = [
-            'pagos_realizados' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+            'pagos_realizados' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
                 ->whereMonth('updated_at', $now->month)
                 ->count(),
-            'valor_pagado_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+            'valor_pagado_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
                 ->whereMonth('updated_at', $now->month)
                 ->sum('valor'),
-            'cuentas_aprobadas_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)
+            'cuentas_aprobadas_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)
                 ->whereMonth('updated_at', $now->month)
                 ->count(),
-            'valor_por_pagar_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)
+            'valor_por_pagar_mes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)
                 ->whereMonth('updated_at', $now->month)
                 ->sum('valor')
         ];
@@ -104,8 +120,8 @@ class TesoreriaController extends Controller
 
         // Eficiencia de pagos (% de cuentas aprobadas que ya fueron pagadas)
         $totalAprobadas = CuentaCobro::whereIn('estado', [
-            CuentaCobro::ESTADO_APROBADO, 
-            CuentaCobro::ESTADO_PAGADO
+            CuentaCobro::ESTADO_APROBADA, 
+            CuentaCobro::ESTADO_PAGADA
         ])->count();
         $eficienciaPagos = $totalAprobadas > 0 ? round(($cuentasPagadas / $totalAprobadas) * 100, 1) : 0;
 
@@ -179,28 +195,104 @@ class TesoreriaController extends Controller
             $query->where('valor', '<=', $request->valor_max);
         }
 
-        // Ordenar por prioridad: aprobadas primero, luego por valor descendente
+        // Ordenar por prioridad: pendiente_tesoreria primero, luego aprobadas, pagadas
         $cuentas = $query->orderByRaw("
             CASE 
-                WHEN estado = 'aprobado' THEN 1
-                WHEN estado = 'pagado' THEN 2
-                WHEN estado = 'pendiente' THEN 3
-                ELSE 4
+                WHEN estado = 'pendiente_tesoreria' THEN 1
+                WHEN estado = 'aprobada' THEN 2
+                WHEN estado = 'pagada' THEN 3
+                WHEN estado = 'pendiente_ordenador' THEN 4
+                ELSE 5
             END
         ")
-        ->orderBy('valor', 'desc')
+        ->orderBy('created_at', 'desc')
         ->paginate(20);
 
         // Estadísticas para mostrar en la vista
         $estadisticas = [
             'total' => CuentaCobro::count(),
-            'aprobadas' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->count(),
-            'pagadas' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->count(),
+            'aprobadas' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->count(),
+            'pagadas' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->count(),
             'valor_total' => CuentaCobro::sum('valor'),
-            'valor_por_pagar' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->sum('valor'),
+            'valor_por_pagar' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->sum('valor'),
         ];
 
         return view('tesoreria.cuentas', compact('cuentas', 'estadisticas'));
+    }
+
+    /**
+     * Ver detalle de una cuenta de cobro
+     */
+    public function show($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('tesoreria')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::with(['user'])->findOrFail($id);
+        
+        return view('tesoreria.show', compact('cuenta'));
+    }
+
+    /**
+     * Mostrar formulario de edición de cuenta
+     */
+    public function edit($id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('tesoreria')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $cuenta = CuentaCobro::with(['user'])->findOrFail($id);
+        
+        // Solo se pueden editar cuentas en estado pendiente_tesoreria
+        if ($cuenta->estado !== CuentaCobro::ESTADO_PENDIENTE_TESORERIA) {
+            return redirect()->back()
+                ->with('error', 'Solo puedes editar cuentas en estado pendiente de tesorería.');
+        }
+        
+        return view('tesoreria.edit', compact('cuenta'));
+    }
+
+    /**
+     * Actualizar los datos de una cuenta (sin cambiar estado)
+     */
+    public function update(Request $request, $id)
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('tesoreria')) {
+            abort(403, 'Acceso denegado');
+        }
+
+        $request->validate([
+            'proyecto_servicio' => 'required|string|max:255',
+            'valor' => 'required|numeric|min:0',
+            'fecha_emision' => 'required|date',
+            'observaciones' => 'nullable|string|max:1000'
+        ]);
+
+        $cuenta = CuentaCobro::findOrFail($id);
+        
+        // Solo se pueden editar cuentas en estado pendiente_tesoreria
+        if ($cuenta->estado !== CuentaCobro::ESTADO_PENDIENTE_TESORERIA) {
+            return redirect()->back()
+                ->with('error', 'Solo puedes editar cuentas en estado pendiente de tesorería.');
+        }
+
+        $cuenta->update([
+            'proyecto_servicio' => $request->proyecto_servicio,
+            'valor' => $request->valor,
+            'fecha_emision' => $request->fecha_emision,
+            'observaciones' => $request->observaciones,
+        ]);
+
+        return redirect()->route('tesoreria.show', $cuenta->id)
+            ->with('success', 'Cuenta de cobro actualizada exitosamente.');
     }
 
     /**
@@ -214,7 +306,7 @@ class TesoreriaController extends Controller
             abort(403, 'Acceso denegado');
         }
 
-        $query = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+        $query = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
                             ->with(['user']);
 
         // Filtros de búsqueda
@@ -239,13 +331,13 @@ class TesoreriaController extends Controller
         $pagos = $query->orderBy('updated_at', 'desc')
                       ->paginate(15);        // Estadísticas de pagos
         $estadisticasPagos = [
-            'total_pagos' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->count(),
-            'valor_total' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor'),
-            'valor_total_pagado' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor'),
-            'pagos_mes_actual' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+            'total_pagos' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->count(),
+            'valor_total' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->sum('valor'),
+            'valor_total_pagado' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)->sum('valor'),
+            'pagos_mes_actual' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
                 ->whereMonth('updated_at', Carbon::now()->month)
                 ->count(),
-            'valor_mes_actual' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+            'valor_mes_actual' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
                 ->whereMonth('updated_at', Carbon::now()->month)
                 ->sum('valor'),
         ];
@@ -265,8 +357,10 @@ class TesoreriaController extends Controller
         }
 
         $query = CuentaCobro::whereIn('estado', [
-                    CuentaCobro::ESTADO_PENDIENTE, 
-                    CuentaCobro::ESTADO_REVISION
+                    CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+                    CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+                    CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                    CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
                 ])
                 ->with(['user']);
 
@@ -287,17 +381,23 @@ class TesoreriaController extends Controller
                                   ->paginate(20);        // Estadísticas para mostrar en la vista
         $estadisticasPendientes = [
             'total_pendientes' => CuentaCobro::whereIn('estado', [
-                CuentaCobro::ESTADO_PENDIENTE, 
-                CuentaCobro::ESTADO_REVISION
+                CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+                CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+                CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
             ])->count(),
-            'solo_pendientes' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE)->count(),
-            'en_revision' => CuentaCobro::where('estado', CuentaCobro::ESTADO_REVISION)->count(),
-            'total_aprobadas' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->count(),
+            'pendiente_supervisor' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR)->count(),
+            'pendiente_contratacion' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_CONTRATACION)->count(),
+            'pendiente_tesoreria' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_TESORERIA)->count(),
+            'pendiente_ordenador' => CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_ORDENADOR)->count(),
+            'total_aprobadas' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->count(),
             'valor_pendiente' => CuentaCobro::whereIn('estado', [
-                CuentaCobro::ESTADO_PENDIENTE, 
-                CuentaCobro::ESTADO_REVISION
+                CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+                CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+                CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
             ])->sum('valor'),
-            'valor_aprobado' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->sum('valor'),
+            'valor_aprobado' => CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->sum('valor'),
         ];
 
         return view('tesoreria.cuentas-pendientes', [
@@ -324,13 +424,13 @@ class TesoreriaController extends Controller
         $cuenta = CuentaCobro::findOrFail($id);
         
         // Solo se pueden marcar como pagadas las cuentas aprobadas
-        if ($cuenta->estado !== CuentaCobro::ESTADO_APROBADO) {
+        if ($cuenta->estado !== CuentaCobro::ESTADO_APROBADA) {
             return redirect()->back()
                 ->with('error', 'Solo se pueden marcar como pagadas las cuentas que están aprobadas.');
         }
 
         $cuenta->update([
-            'estado' => CuentaCobro::ESTADO_PAGADO,
+            'estado' => CuentaCobro::ESTADO_PAGADA,
             'descripcion' => $request->observaciones ? 
                 ($cuenta->descripcion . "\n\n--- Observaciones de Pago ---\n" . $request->observaciones) : 
                 $cuenta->descripcion
@@ -341,42 +441,44 @@ class TesoreriaController extends Controller
     }
 
     /**
-     * Actualizar estado de cuenta (aprobar/rechazar desde tesorería)
+     * Obtener tiempo promedio de revisión
      */
-    public function actualizarEstado(Request $request, $id)
+    public function getAverageReviewTime()
     {
         $user = Auth::user();
         
         if (!$user->hasRole('tesoreria')) {
-            abort(403, 'Acceso denegado');
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $request->validate([
-            'estado' => 'required|in:aprobado,rechazado',
-            'observaciones' => 'nullable|string|max:1000'
-        ]);
-
-        $cuenta = CuentaCobro::findOrFail($id);
+        $avgTime = CuentaCobro::whereNotNull('aprobado_tesoreria_at')
+            ->whereNotNull('aprobado_contratacion_at')
+            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, aprobado_contratacion_at, aprobado_tesoreria_at)) as avg_hours')
+            ->first();
         
-        // Solo se pueden actualizar cuentas pendientes o en revisión
-        if (!in_array($cuenta->estado, [CuentaCobro::ESTADO_PENDIENTE, CuentaCobro::ESTADO_REVISION])) {
-            return redirect()->back()
-                ->with('error', 'Esta cuenta no puede ser modificada en su estado actual.');
+        return response()->json([
+            'success' => true,
+            'average_hours' => round($avgTime->avg_hours ?? 0, 1)
+        ]);
+    }
+    
+    /**
+     * Obtener evolución semanal de pagos
+     */
+    public function getWeeklyEvolution()
+    {
+        $user = Auth::user();
+        
+        if (!$user->hasRole('tesoreria')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $cuenta->update([
-            'estado' => $request->estado,
-            'descripcion' => $request->observaciones ? 
-                ($cuenta->descripcion . "\n\n--- Observaciones de Tesorería ---\n" . $request->observaciones) : 
-                $cuenta->descripcion
+        $evolution = $this->getPagosPorDia();
+        
+        return response()->json([
+            'success' => true,
+            'evolution' => $evolution
         ]);
-
-        $mensaje = $request->estado === 'aprobado' ? 
-            'Cuenta aprobada para pago.' : 
-            'Cuenta rechazada con observaciones.';
-
-        return redirect()->back()
-            ->with('success', $mensaje);
     }
 
     /**
@@ -389,7 +491,7 @@ class TesoreriaController extends Controller
 
         for ($i = 29; $i >= 0; $i--) {
             $date = $now->copy()->subDays($i);
-            $dayData = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+            $dayData = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
                 ->whereDate('updated_at', $date)
                 ->selectRaw('COUNT(*) as count, SUM(valor) as total')
                 ->first();
@@ -414,7 +516,7 @@ class TesoreriaController extends Controller
         $daysInMonth = $now->daysInMonth;
         $currentDay = $now->day;
         
-        $pagosDelMes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+        $pagosDelMes = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
             ->whereMonth('updated_at', $now->month)
             ->whereYear('updated_at', $now->year)
             ->count();
@@ -430,7 +532,7 @@ class TesoreriaController extends Controller
         $notifications = [];
 
         // Cuentas aprobadas listas para pago
-        $listasParaPago = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADO)->count();
+        $listasParaPago = CuentaCobro::where('estado', CuentaCobro::ESTADO_APROBADA)->count();
         if ($listasParaPago > 0) {
             $notifications[] = [
                 'type' => 'info',
@@ -443,11 +545,8 @@ class TesoreriaController extends Controller
             ];
         }
 
-        // Cuentas pendientes que podrían necesitar revisión
-        $pendientesRevision = CuentaCobro::whereIn('estado', [
-                CuentaCobro::ESTADO_PENDIENTE, 
-                CuentaCobro::ESTADO_REVISION
-            ])
+        // Cuentas pendientes tesorería que podrían necesitar revisión
+        $pendientesRevision = CuentaCobro::where('estado', CuentaCobro::ESTADO_PENDIENTE_TESORERIA)
             ->where('created_at', '<=', Carbon::now()->subDays(7))
             ->count();
 
@@ -464,7 +563,7 @@ class TesoreriaController extends Controller
         }
 
         // Pagos realizados hoy
-        $pagosHoy = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADO)
+        $pagosHoy = CuentaCobro::where('estado', CuentaCobro::ESTADO_PAGADA)
             ->whereDate('updated_at', Carbon::today())
             ->count();
 
@@ -500,7 +599,7 @@ class TesoreriaController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $data = $this->getTesoreriaData($user);
+        $data = $this->getTesoreriaDataPrivate($user);
         
         return response()->json([
             'success' => true,
