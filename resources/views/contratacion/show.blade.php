@@ -159,29 +159,41 @@
             <!-- Archivo adjunto -->
             @if($cuenta->ruta_archivo)
                 <div class="glass-card p-6">
-                    <h3 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-                        <i class="fas fa-paperclip text-green-500 mr-3"></i>
-                        Archivo Adjunto
-                    </h3>
-                    <div class="bg-green-50 rounded-xl p-6 border border-green-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-4">
-                                <div class="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center">
-                                    <i class="fas fa-file-pdf text-white text-xl"></i>
-                                </div>
-                                <div>
-                                    <div class="font-semibold text-gray-800">{{ $cuenta->archivo_nombre }}</div>
-                                    <div class="text-sm text-gray-600">Documento adjunto</div>
-                                </div>
-                            </div>
-                            @if($cuenta->archivo_url)
-                                <a href="{{ $cuenta->archivo_url }}" target="_blank"
-                                   class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-medium">
-                                    <i class="fas fa-download mr-2"></i>
-                                    Descargar
-                                </a>
-                            @endif
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-xl font-semibold text-gray-800 flex items-center">
+                            <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                            Documento Adjunto
+                        </h3>
+                        <div class="flex space-x-2">
+                            <a href="{{ $cuenta->archivo_url }}" 
+                               target="_blank"
+                               class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-medium text-sm">
+                                <i class="fas fa-external-link-alt mr-2"></i>
+                                Abrir en Nueva Pestaña
+                            </a>
+                            <a href="{{ $cuenta->archivo_url }}" 
+                               download
+                               class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-medium text-sm">
+                                <i class="fas fa-download mr-2"></i>
+                                Descargar PDF
+                            </a>
                         </div>
+                    </div>
+                    
+                    <!-- Visor de PDF embebido -->
+                    <div class="bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-300" style="height: 800px;">
+                        <iframe 
+                            src="{{ $cuenta->archivo_url }}" 
+                            class="w-full h-full"
+                            frameborder="0"
+                            type="application/pdf">
+                            <p class="p-4 text-center text-gray-600">
+                                Tu navegador no puede mostrar el PDF. 
+                                <a href="{{ $cuenta->archivo_url }}" class="text-blue-600 hover:underline" download>
+                                    Haz clic aquí para descargarlo
+                                </a>
+                            </p>
+                        </iframe>
                     </div>
                 </div>
             @endif
