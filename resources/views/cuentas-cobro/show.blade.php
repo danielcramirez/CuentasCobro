@@ -165,7 +165,8 @@
                                 ${{ number_format($cuenta->valor, 0, ',', '.') }}
                             </div>
                             <div class="text-sm text-green-600 mt-2">
-                                {{ \NumberFormatter::create('es_CO', \NumberFormatter::SPELLOUT)->format($cuenta->valor) }} pesos
+                                {{--<!--{{ \NumberFormatter::create('es_CO', \NumberFormatter::SPELLOUT)->format($cuenta->valor) }} pesos -->--}}
+                                COP
                             </div>
                         </div>
 
