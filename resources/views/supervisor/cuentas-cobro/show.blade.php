@@ -203,7 +203,7 @@
         <!-- Panel de acciones -->
         <div class="space-y-6">
             <!-- Acciones de revisión -->
-            @if(in_array($cuenta->estado, ['pendiente', 'revision']))
+            @if($cuenta->estado === 'pendiente_supervisor')
                 <div class="glass-card p-6">
                     <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
                         <i class="fas fa-clipboard-check text-indigo-500 mr-3"></i>
@@ -211,10 +211,8 @@
                     </h3>
                     
                     <!-- Aprobar -->
-                    <form action="{{ route('supervisor.cuentas-cobro.update', $cuenta->id) }}" method="POST" class="mb-4">
+                    <form action="{{ route('cuentas-cobro.aprobar-supervisor', $cuenta->id) }}" method="POST" class="mb-4">
                         @csrf
-                        @method('PUT')
-                        <input type="hidden" name="estado" value="aprobado">
                         <button type="submit" 
                                 class="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center">
                             <i class="fas fa-check-circle mr-2"></i>
@@ -224,10 +222,43 @@
                     
                     <!-- Rechazar -->
                     <button onclick="showRejectModal()" 
-                            class="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center">
+                            class="w-full bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center mb-4">
                         <i class="fas fa-times-circle mr-2"></i>
                         Rechazar Cuenta
                     </button>
+                    
+                    <!-- Editar -->
+                    <a href="{{ route('supervisor.cuentas-cobro.edit', $cuenta->id) }}" 
+                       class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-xl font-medium transition-all flex items-center justify-center">
+                        <i class="fas fa-edit mr-2"></i>
+                        Editar Cuenta
+                    </a>
+                </div>
+            @else
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-6 flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                        Estado
+                    </h3>
+                    <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                        <p class="text-sm text-blue-800">
+                            @if($cuenta->estado === 'borrador')
+                                Esta cuenta está en borrador y debe ser enviada a revisión por el contratista.
+                            @elseif($cuenta->estado === 'pendiente_contratacion')
+                                Esta cuenta está pendiente de aprobación por el área de contratación.
+                            @elseif($cuenta->estado === 'pendiente_tesoreria')
+                                Esta cuenta está pendiente de aprobación por tesorería.
+                            @elseif($cuenta->estado === 'pendiente_ordenador')
+                                Esta cuenta está pendiente de aprobación por el ordenador del gasto.
+                            @elseif($cuenta->estado === 'aprobada')
+                                Esta cuenta ha sido completamente aprobada y está lista para pago.
+                            @elseif($cuenta->estado === 'rechazada')
+                                Esta cuenta ha sido rechazada.
+                            @elseif($cuenta->estado === 'pagada')
+                                Esta cuenta ha sido pagada.
+                            @endif
+                        </p>
+                    </div>
                 </div>
             @endif
 
@@ -272,16 +303,14 @@
             </button>
         </div>
         
-        <form action="{{ route('supervisor.cuentas-cobro.update', $cuenta->id) }}" method="POST">
+        <form action="{{ route('cuentas-cobro.rechazar', $cuenta->id) }}" method="POST">
             @csrf
-            @method('PUT')
-            <input type="hidden" name="estado" value="rechazado">
             
             <div class="mb-4">
-                <label for="observaciones" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="comentarios" class="block text-sm font-medium text-gray-700 mb-2">
                     Motivo del rechazo (obligatorio)
                 </label>
-                <textarea name="observaciones" id="observaciones" rows="4" 
+                <textarea name="comentarios" id="comentarios" rows="4" 
                           class="w-full border border-gray-300 rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                           placeholder="Especifica el motivo del rechazo..." required></textarea>
             </div>
@@ -310,7 +339,7 @@ function showRejectModal() {
 function hideRejectModal() {
     document.getElementById('rejectModal').classList.add('hidden');
     document.body.style.overflow = 'auto';
-    document.getElementById('observaciones').value = '';
+    document.getElementById('comentarios').value = '';
 }
 
 // Cerrar modal al hacer clic fuera
