@@ -39,17 +39,31 @@ class ContratistaDashboardController extends Controller
 
         // Estadísticas principales
         $totalCuentas = $user->cuentasCobro()->count();
-        $cuentasPendientes = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PENDIENTE)->count();
-        $cuentasAprobadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_APROBADO)->count();
-        $cuentasPagadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADO)->count();
-        $cuentasRechazadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_RECHAZADO)->count();
-        $cuentasRevision = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_REVISION)->count();
+        $cuentasPendientes = $user->cuentasCobro()->whereIn('estado', [
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+            CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+            CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
+        ])->count();
+        $cuentasAprobadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_APROBADA)->count();
+        $cuentasPagadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADA)->count();
+        $cuentasRechazadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_RECHAZADA)->count();
+        $cuentasRevision = $user->cuentasCobro()->whereIn('estado', [
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION
+        ])->count();
 
         // Valores monetarios
         $totalFacturado = $user->cuentasCobro()->sum('valor');
-        $totalPagado = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADO)->sum('valor');
+        $totalPagado = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_PAGADA)->sum('valor');
         $valorPendiente = $user->cuentasCobro()
-            ->whereIn('estado', [CuentaCobro::ESTADO_PENDIENTE, CuentaCobro::ESTADO_REVISION, CuentaCobro::ESTADO_APROBADO])
+            ->whereIn('estado', [
+                CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+                CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+                CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                CuentaCobro::ESTADO_PENDIENTE_ORDENADOR,
+                CuentaCobro::ESTADO_APROBADA
+            ])
             ->sum('valor');
 
         // Fecha del último envío
@@ -70,7 +84,11 @@ class ContratistaDashboardController extends Controller
 
         // Próximos pagos programados
         $proximosPagos = $user->cuentasCobro()
-            ->whereIn('estado', [CuentaCobro::ESTADO_APROBADO, CuentaCobro::ESTADO_REVISION])
+            ->whereIn('estado', [
+                CuentaCobro::ESTADO_APROBADA,
+                CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+                CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
+            ])
             ->orderBy('fecha_emision', 'asc')
             ->limit(5)
             ->get();
@@ -80,7 +98,7 @@ class ContratistaDashboardController extends Controller
             'cuentas_mes' => $user->cuentasCobro()->whereMonth('created_at', $now->month)->count(),
             'valor_mes' => $user->cuentasCobro()->whereMonth('created_at', $now->month)->sum('valor'),
             'aprobadas_mes' => $user->cuentasCobro()
-                ->where('estado', CuentaCobro::ESTADO_PAGADO)
+                ->where('estado', CuentaCobro::ESTADO_PAGADA)
                 ->whereMonth('updated_at', $now->month)
                 ->count()
         ];
@@ -139,7 +157,7 @@ class ContratistaDashboardController extends Controller
                     SUM(valor) as total_valor,
                     SUM(CASE WHEN estado = ? THEN valor ELSE 0 END) as valor_pagado,
                     COUNT(CASE WHEN estado = ? THEN 1 END) as cuentas_pagadas
-                ', [CuentaCobro::ESTADO_PAGADO, CuentaCobro::ESTADO_PAGADO])
+                ', [CuentaCobro::ESTADO_PAGADA, CuentaCobro::ESTADO_PAGADA])
                 ->first();
 
             $evolution[] = [
@@ -163,7 +181,7 @@ class ContratistaDashboardController extends Controller
         $notifications = [];
 
         // Cuentas rechazadas
-        $rechazadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_RECHAZADO)->count();
+        $rechazadas = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_RECHAZADA)->count();
         if ($rechazadas > 0) {
             $notifications[] = [
                 'type' => 'error',
@@ -177,7 +195,12 @@ class ContratistaDashboardController extends Controller
         }
 
         // Cuentas en revisión
-        $revision = $user->cuentasCobro()->where('estado', CuentaCobro::ESTADO_REVISION)->count();
+        $revision = $user->cuentasCobro()->whereIn('estado', [
+            CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR,
+            CuentaCobro::ESTADO_PENDIENTE_CONTRATACION,
+            CuentaCobro::ESTADO_PENDIENTE_TESORERIA,
+            CuentaCobro::ESTADO_PENDIENTE_ORDENADOR
+        ])->count();
         if ($revision > 0) {
             $notifications[] = [
                 'type' => 'info',
@@ -192,7 +215,7 @@ class ContratistaDashboardController extends Controller
 
         // Pagos recientes
         $pagosRecientes = $user->cuentasCobro()
-            ->where('estado', CuentaCobro::ESTADO_PAGADO)
+            ->where('estado', CuentaCobro::ESTADO_PAGADA)
             ->where('updated_at', '>=', Carbon::now()->subDays(7))
             ->count();
         
@@ -240,7 +263,7 @@ class ContratistaDashboardController extends Controller
     private function getAverageApprovalTime($user)
     {
         $approvedCuentas = $user->cuentasCobro()
-            ->whereIn('estado', [CuentaCobro::ESTADO_PAGADO, CuentaCobro::ESTADO_APROBADO])
+            ->whereIn('estado', [CuentaCobro::ESTADO_PAGADA, CuentaCobro::ESTADO_APROBADA])
             ->whereNotNull('updated_at')
             ->get();
 

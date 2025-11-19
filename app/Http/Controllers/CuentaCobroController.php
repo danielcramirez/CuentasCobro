@@ -7,9 +7,16 @@ use App\Models\CuentaCobro;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Services\NotificationService;
 
 class CuentaCobroController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
     public function index()
     {
         $user = Auth::user();
@@ -86,10 +93,13 @@ class CuentaCobroController extends Controller
         $cuenta->valor = $request->input('valor');
         $cuenta->descripcion = $request->input('descripcion');
         $cuenta->ruta_archivo = $primerArchivoRuta;
-        $cuenta->estado = CuentaCobro::ESTADO_BORRADOR; // Estado inicial
+        $cuenta->estado = CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR; // Enviar directamente a supervisor
         $cuenta->save();
 
-        return redirect()->route('cuentas-cobro.mostrar')->with('success', 'Cuenta de cobro creada exitosamente.');
+        // Notificar a supervisores
+        $this->notificationService->notificarNuevaCuentaCobro($cuenta);
+
+        return redirect()->route('cuentas-cobro.mostrar')->with('success', 'Cuenta de cobro creada y enviada a revisión del supervisor.');
     }
 
     public function edit($id)
@@ -630,6 +640,199 @@ class CuentaCobroController extends Controller
 
         return redirect()->route('contratista.cuentas.index')
             ->with('success', 'Cuenta de cobro eliminada exitosamente.');
+    }
+
+    /**
+     * Enviar cuenta de cobro a revisión (Contratista)
+     */
+    public function enviarRevision($id)
+    {
+        $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
+        // Verificar que sea el propietario y esté en borrador
+        if ($cuenta->user_id !== $user->id || $cuenta->estado !== CuentaCobro::ESTADO_BORRADOR) {
+            return redirect()->back()->with('error', 'No puedes enviar esta cuenta a revisión.');
+        }
+
+        // Cambiar estado a pendiente supervisor
+        $cuenta->estado = CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR;
+        $cuenta->save();
+
+        // Notificar a supervisores
+        $this->notificationService->notificarNuevaCuentaCobro($cuenta);
+
+        return redirect()->back()->with('success', 'Cuenta de cobro enviada a revisión del supervisor.');
+    }
+
+    /**
+     * Aprobar cuenta de cobro (Supervisor)
+     */
+    public function aprobarSupervisor($id)
+    {
+        $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user->hasAnyRole(['supervisor'])) {
+            return redirect()->back()->with('error', 'No tienes permisos para esta acción.');
+        }
+
+        if ($cuenta->estado !== CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR) {
+            return redirect()->back()->with('error', 'Esta cuenta no está en estado de revisión del supervisor.');
+        }
+
+        $cuenta->estado = CuentaCobro::ESTADO_PENDIENTE_CONTRATACION;
+        $cuenta->aprobado_supervisor_at = now();
+        $cuenta->aprobado_supervisor_by = $user->id;
+        $cuenta->save();
+
+        // Notificar a contratación
+        $this->notificationService->notificarContratacion($cuenta);
+
+        return redirect()->back()->with('success', 'Cuenta aprobada. Se ha notificado a contratación.');
+    }
+
+    /**
+     * Aprobar cuenta de cobro (Contratación)
+     */
+    public function aprobarContratacion($id)
+    {
+        $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user->hasAnyRole(['contratacion'])) {
+            return redirect()->back()->with('error', 'No tienes permisos para esta acción.');
+        }
+
+        if ($cuenta->estado !== CuentaCobro::ESTADO_PENDIENTE_CONTRATACION) {
+            return redirect()->back()->with('error', 'Esta cuenta no está en estado de revisión de contratación.');
+        }
+
+        $cuenta->estado = CuentaCobro::ESTADO_PENDIENTE_TESORERIA;
+        $cuenta->aprobado_contratacion_at = now();
+        $cuenta->aprobado_contratacion_by = $user->id;
+        $cuenta->save();
+
+        // Notificar a tesorería
+        $this->notificationService->notificarTesoreria($cuenta);
+
+        return redirect()->back()->with('success', 'Cuenta aprobada. Se ha notificado a tesorería.');
+    }
+
+    /**
+     * Aprobar cuenta de cobro (Tesorería)
+     */
+    public function aprobarTesoreria($id)
+    {
+        $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user->hasAnyRole(['tesoreria'])) {
+            return redirect()->back()->with('error', 'No tienes permisos para esta acción.');
+        }
+
+        if ($cuenta->estado !== CuentaCobro::ESTADO_PENDIENTE_TESORERIA) {
+            return redirect()->back()->with('error', 'Esta cuenta no está en estado de revisión de tesorería.');
+        }
+
+        $cuenta->estado = CuentaCobro::ESTADO_PENDIENTE_ORDENADOR;
+        $cuenta->aprobado_tesoreria_at = now();
+        $cuenta->aprobado_tesoreria_by = $user->id;
+        $cuenta->save();
+
+        // Notificar al ordenador del gasto
+        $this->notificationService->notificarOrdenadorGasto($cuenta);
+
+        return redirect()->back()->with('success', 'Cuenta aprobada. Se ha notificado al ordenador del gasto.');
+    }
+
+    /**
+     * Aprobación final (Ordenador del Gasto)
+     */
+    public function aprobarOrdenador($id)
+    {
+        $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user->hasAnyRole(['ordenador_gasto', 'alcalde'])) {
+            return redirect()->back()->with('error', 'No tienes permisos para esta acción.');
+        }
+
+        if ($cuenta->estado !== CuentaCobro::ESTADO_PENDIENTE_ORDENADOR) {
+            return redirect()->back()->with('error', 'Esta cuenta no está en estado de aprobación final.');
+        }
+
+        $cuenta->estado = CuentaCobro::ESTADO_APROBADA;
+        $cuenta->aprobado_ordenador_at = now();
+        $cuenta->aprobado_ordenador_by = $user->id;
+        $cuenta->save();
+
+        // Notificar al contratista
+        $this->notificationService->notificarContratista($cuenta, 'aprobada');
+
+        return redirect()->back()->with('success', 'Cuenta aprobada completamente. El contratista ha sido notificado.');
+    }
+
+    /**
+     * Rechazar cuenta de cobro (cualquier rol en el flujo)
+     */
+    public function rechazar(Request $request, $id)
+    {
+        $request->validate([
+            'comentarios' => 'required|string|max:500'
+        ]);
+
+        $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
+        // Verificar permisos según el estado actual
+        $puedeRechazar = false;
+        if ($cuenta->estado === CuentaCobro::ESTADO_PENDIENTE_SUPERVISOR && $user->hasAnyRole(['supervisor'])) {
+            $puedeRechazar = true;
+        } elseif ($cuenta->estado === CuentaCobro::ESTADO_PENDIENTE_CONTRATACION && $user->hasAnyRole(['contratacion'])) {
+            $puedeRechazar = true;
+        } elseif ($cuenta->estado === CuentaCobro::ESTADO_PENDIENTE_TESORERIA && $user->hasAnyRole(['tesoreria'])) {
+            $puedeRechazar = true;
+        } elseif ($cuenta->estado === CuentaCobro::ESTADO_PENDIENTE_ORDENADOR && $user->hasAnyRole(['ordenador_gasto', 'alcalde'])) {
+            $puedeRechazar = true;
+        }
+
+        if (!$puedeRechazar) {
+            return redirect()->back()->with('error', 'No tienes permisos para rechazar esta cuenta.');
+        }
+
+        $cuenta->estado = CuentaCobro::ESTADO_RECHAZADA;
+        $cuenta->comentarios_rechazo = $request->input('comentarios');
+        $cuenta->rechazado_by = $user->id;
+        $cuenta->rechazado_at = now();
+        $cuenta->save();
+
+        // Notificar al contratista
+        $this->notificationService->notificarContratista($cuenta, 'rechazada', $request->input('comentarios'));
+
+        return redirect()->back()->with('success', 'Cuenta rechazada. El contratista ha sido notificado.');
+    }
+
+    /**
+     * Marcar cuenta como pagada (Tesorería)
+     */
+    public function marcarPagada($id)
+    {
+        $cuenta = CuentaCobro::findOrFail($id);
+        $user = Auth::user();
+
+        if (!$user->hasAnyRole(['tesoreria'])) {
+            return redirect()->back()->with('error', 'No tienes permisos para esta acción.');
+        }
+
+        if ($cuenta->estado !== CuentaCobro::ESTADO_APROBADA) {
+            return redirect()->back()->with('error', 'Esta cuenta no está aprobada para pago.');
+        }
+
+        $cuenta->estado = CuentaCobro::ESTADO_PAGADA;
+        $cuenta->save();
+
+        return redirect()->back()->with('success', 'Cuenta marcada como pagada.');
     }
 
 }
