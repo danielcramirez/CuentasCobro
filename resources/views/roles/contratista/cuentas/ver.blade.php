@@ -206,30 +206,46 @@
 
             <!-- Archivo adjunto -->
             <div class="glass-card p-6">
-                <div class="flex items-center mb-6">
-                    <div class="bg-green-100 p-3 rounded-xl mr-4">
-                        <i class="fas fa-paperclip text-green-600 text-xl"></i>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center">
+                        <div class="bg-green-100 p-3 rounded-xl mr-4">
+                            <i class="fas fa-file-pdf text-red-600 text-xl"></i>
+                        </div>
+                        <h2 class="text-xl font-semibold text-gray-800">Documentos de Soporte</h2>
                     </div>
-                    <h2 class="text-xl font-semibold text-gray-800">Documentos de Soporte</h2>
+                    @if($cuenta->archivo_url)
+                    <div class="flex space-x-2">
+                        <a href="{{ $cuenta->archivo_url }}" 
+                           target="_blank"
+                           class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all font-medium text-sm">
+                            <i class="fas fa-external-link-alt mr-2"></i>
+                            Abrir en Nueva Pestaña
+                        </a>
+                        <a href="{{ $cuenta->archivo_url }}" 
+                           download
+                           class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all font-medium text-sm">
+                            <i class="fas fa-download mr-2"></i>
+                            Descargar PDF
+                        </a>
+                    </div>
+                    @endif
                 </div>
 
                 @if($cuenta->archivo_url)
-                    <div class="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <i class="fas fa-file-pdf text-red-500 mr-3 text-2xl"></i>
-                                <div>
-                                    <p class="font-semibold text-gray-800">{{ $cuenta->archivo_nombre }}</p>
-                                    <p class="text-sm text-gray-600">Documento adjunto</p>
-                                </div>
-                            </div>
-                            <a href="{{ $cuenta->archivo_url }}" 
-                               target="_blank"
-                               class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center">
-                                <i class="fas fa-download mr-2"></i>
-                                Descargar
-                            </a>
-                        </div>
+                    <!-- Visor de PDF embebido -->
+                    <div class="bg-gray-100 rounded-xl overflow-hidden border-2 border-gray-300" style="height: 800px;">
+                        <iframe 
+                            src="{{ $cuenta->archivo_url }}" 
+                            class="w-full h-full"
+                            frameborder="0"
+                            type="application/pdf">
+                            <p class="p-4 text-center text-gray-600">
+                                Tu navegador no puede mostrar el PDF. 
+                                <a href="{{ $cuenta->archivo_url }}" class="text-blue-600 hover:underline" download>
+                                    Haz clic aquí para descargarlo
+                                </a>
+                            </p>
+                        </iframe>
                     </div>
                 @else
                     <div class="bg-gray-50 p-8 rounded-lg border text-center">
