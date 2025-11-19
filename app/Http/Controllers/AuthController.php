@@ -93,18 +93,7 @@ class AuthController extends Controller
 
         // Datos específicos para ordenador del gasto
         if ($user->hasRole('ordenador_gasto')) {
-            $dashboardLink = 'shared.other-roles';
-            $dashboardData = array_merge($dashboardData, [
-                'pendingAuthorizations' => CuentaCobro::where('estado', 'revision')->count(),
-                'authorizedToday' => CuentaCobro::where('estado', 'aprobado')
-                    ->whereDate('updated_at', today())->count(),
-                'budgetStatus' => CuentaCobro::where('estado', 'aprobado')->sum('valor'),
-                'monthlyBudget' => CuentaCobro::where('estado', 'aprobado')
-                    ->whereMonth('updated_at', now()->month)->sum('valor'),
-                'recentAuthorizations' => CuentaCobro::with('user')
-                    ->whereIn('estado', ['revision', 'aprobado'])
-                    ->latest()->limit(5)->get()
-            ]);
+            return redirect()->route('ordenador-gasto.dashboard');
         }
 
         // Datos específicos para contratación
