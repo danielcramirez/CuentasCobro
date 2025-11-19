@@ -1,32 +1,17 @@
-@extends('layouts.app')
+@extends('layouts.dashboard')
 
 @section('title', 'Editar Cuenta de Cobro - CuentasCobro')
 
 @section('content')
-<div class="min-h-screen pt-24 pb-8 px-4 sm:px-6 lg:px-8">
+<x-breadcrumbs 
+    :items="[
+        ['name' => 'Inicio', 'route' => auth()->user()->hasRole('contratista') ? 'contratista.dashboard' : 'dashboard'],
+        ['name' => 'Cuentas de Cobro', 'route' => 'cuentas-cobro.mostrar'],
+        ['name' => 'Editar Cuenta #' . $cuenta->id]
+    ]" 
+/>
+<div class="min-h-screen pb-8 px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
-        
-        <!-- Breadcrumb de navegación -->
-        <div class="mb-6">
-            <nav class="flex items-center space-x-2 text-sm text-gray-500" aria-label="Breadcrumb">
-                <a href="{{ route('dashboard') }}" class="hover:text-gray-700 transition-colors flex items-center">
-                    <i class="fas fa-home mr-1"></i>
-                    Inicio
-                </a>
-                <i class="fas fa-chevron-right text-gray-300"></i>
-                @if(auth()->user()->hasRole('contratista'))
-                    <a href="{{ route('contratista.dashboard') }}" class="hover:text-gray-700 transition-colors">
-                        Dashboard Contratista
-                    </a>
-                    <i class="fas fa-chevron-right text-gray-300"></i>
-                @endif
-                <a href="{{ route('cuentas-cobro.mostrar') }}" class="hover:text-gray-700 transition-colors">
-                    Cuentas de Cobro
-                </a>
-                <i class="fas fa-chevron-right text-gray-300"></i>
-                <span class="text-gray-700 font-medium">Editar #{{ $cuenta->id }}</span>
-            </nav>
-        </div>
 
         <!-- Header mejorado -->
         <div class="glass-card p-6 mb-8 slide-up">
@@ -45,15 +30,19 @@
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3">
                     <div class="flex items-center space-x-2">
                         <div class="w-3 h-3 rounded-full
-                            @if($cuenta->estado === 'pendiente') bg-yellow-400
-                            @elseif($cuenta->estado === 'aprobado') bg-green-400
-                            @elseif($cuenta->estado === 'rechazado') bg-red-400
-                            @elseif($cuenta->estado === 'pagado') bg-blue-400
+                            @if($cuenta->estado === 'borrador') bg-gray-400
+                            @elseif($cuenta->estado === 'pendiente_supervisor') bg-yellow-400
+                            @elseif($cuenta->estado === 'pendiente_contratacion') bg-orange-400
+                            @elseif($cuenta->estado === 'pendiente_tesoreria') bg-purple-400
+                            @elseif($cuenta->estado === 'pendiente_ordenador') bg-indigo-400
+                            @elseif($cuenta->estado === 'aprobada') bg-green-400
+                            @elseif($cuenta->estado === 'rechazada') bg-red-400
+                            @elseif($cuenta->estado === 'pagada') bg-blue-400
                             @else bg-gray-400
                             @endif
                         "></div>
                         <span class="text-xs sm:text-sm font-medium text-gray-700">
-                            Estado: <span class="text-blue-600">{{ ucfirst($cuenta->estado) }}</span>
+                            Estado: <span class="text-blue-600">{{ str_replace('_', ' ', ucfirst($cuenta->estado)) }}</span>
                         </span>
                     </div>
                 </div>
@@ -62,7 +51,7 @@
 
         <!-- Main Form -->
         <div class="glass-card p-8">
-            <form action="{{ route('cuentas-cobro.update', $cuenta->id) }}" method="POST" id="editForm" class="space-y-6">
+            <form action="{{ route('cuentas-cobro.update', $cuenta->id) }}" method="POST" id="editForm" class="space-y-6" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
 
@@ -72,7 +61,7 @@
                         <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
                         <span class="text-blue-800 font-medium">Estado actual: 
                             <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-sm ml-2">
-                                {{ ucfirst($cuenta->estado) }}
+                                {{ str_replace('_', ' ', ucfirst($cuenta->estado)) }}
                             </span>
                         </span>
                     </div>
@@ -109,24 +98,34 @@
                             class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300" 
                             id="estado" 
                             name="estado" 
-                            required
+                            disabled
                         >
                             <option value="borrador" {{ $cuenta->estado === 'borrador' ? 'selected' : '' }}>
                                 📝 Borrador
                             </option>
-                            <option value="pendiente" {{ $cuenta->estado === 'pendiente' ? 'selected' : '' }}>
-                                ⏳ Pendiente
+                            <option value="pendiente_supervisor" {{ $cuenta->estado === 'pendiente_supervisor' ? 'selected' : '' }}>
+                                ⏳ Pendiente Supervisor
                             </option>
-                            <option value="aprobado" {{ $cuenta->estado === 'aprobado' ? 'selected' : '' }}>
-                                ✅ Aprobado
+                            <option value="pendiente_contratacion" {{ $cuenta->estado === 'pendiente_contratacion' ? 'selected' : '' }}>
+                                📋 Pendiente Contratación
                             </option>
-                            <option value="pagado" {{ $cuenta->estado === 'pagado' ? 'selected' : '' }}>
-                                💰 Pagado
+                            <option value="pendiente_tesoreria" {{ $cuenta->estado === 'pendiente_tesoreria' ? 'selected' : '' }}>
+                                💼 Pendiente Tesorería
                             </option>
-                            <option value="rechazado" {{ $cuenta->estado === 'rechazado' ? 'selected' : '' }}>
-                                ❌ Rechazado
+                            <option value="pendiente_ordenador" {{ $cuenta->estado === 'pendiente_ordenador' ? 'selected' : '' }}>
+                                👔 Pendiente Ordenador
+                            </option>
+                            <option value="aprobada" {{ $cuenta->estado === 'aprobada' ? 'selected' : '' }}>
+                                ✅ Aprobada
+                            </option>
+                            <option value="rechazada" {{ $cuenta->estado === 'rechazada' ? 'selected' : '' }}>
+                                ❌ Rechazada
+                            </option>
+                            <option value="pagada" {{ $cuenta->estado === 'pagada' ? 'selected' : '' }}>
+                                💰 Pagada
                             </option>
                         </select>
+                        <p class="text-xs text-gray-500 mt-1">El estado no puede ser modificado directamente. Cambia mediante el flujo de aprobación.</p>
                         <div class="text-red-500 text-sm hidden" id="estado_error"></div>
                     </div>
 
@@ -172,6 +171,75 @@
                     </div>
                     <div class="text-red-500 text-sm hidden" id="valor_error"></div>
                     <div class="text-gray-500 text-sm" id="valor_formato">Formato: 0,000.00</div>
+                </div>
+
+                <!-- Archivo Adjunto Actual -->
+                @if($cuenta->archivo_adjunto)
+                <div class="col-span-1 lg:col-span-2 space-y-2">
+                    <label class="block text-sm font-semibold text-gray-700">
+                        <i class="fas fa-file-pdf mr-2 text-red-500"></i>
+                        Archivo Actual
+                    </label>
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4">
+                        <div class="flex items-center justify-between flex-wrap gap-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-pdf text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800">{{ basename($cuenta->archivo_adjunto) }}</p>
+                                    <p class="text-sm text-gray-600">
+                                        Subido el {{ $cuenta->created_at->format('d/m/Y H:i') }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <a href="{{ Storage::url($cuenta->archivo_adjunto) }}" 
+                                   target="_blank"
+                                   class="inline-flex items-center px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    Ver
+                                </a>
+                                <button type="button"
+                                        onclick="confirmarBorrarArchivo()"
+                                        class="inline-flex items-center px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm">
+                                    <i class="fas fa-trash mr-1"></i>
+                                    Borrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="borrar_archivo" id="borrar_archivo" value="0">
+                </div>
+                @endif
+
+                <!-- Nuevo Archivo (Reemplazo) -->
+                <div class="col-span-1 lg:col-span-2 space-y-2">
+                    <label for="archivo_adjunto" class="block text-sm font-semibold text-gray-700">
+                        <i class="fas fa-upload mr-2 text-indigo-500"></i>
+                        @if($cuenta->archivo_adjunto)
+                            Reemplazar Archivo (Opcional)
+                        @else
+                            Subir Archivo
+                        @endif
+                    </label>
+                    <div class="relative">
+                        <input 
+                            type="file" 
+                            class="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 hover:border-blue-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
+                            id="archivo_adjunto" 
+                            name="archivo_adjunto"
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                            {{ !$cuenta->archivo_adjunto ? 'required' : '' }}
+                        >
+                    </div>
+                    <p class="text-xs text-gray-500">
+                        Formatos permitidos: PDF, DOC, DOCX, JPG, PNG (Máx. 10MB)
+                        @if($cuenta->archivo_adjunto)
+                            <br><span class="text-blue-600 font-medium">Si subes un nuevo archivo, reemplazará el actual</span>
+                        @endif
+                    </p>
+                    <div class="text-red-500 text-sm hidden" id="archivo_error"></div>
                 </div>
 
                 <!-- Action Buttons mejorados -->
@@ -237,11 +305,74 @@
 </div>
 
 <script>
+// Función para confirmar borrado de archivo
+function confirmarBorrarArchivo() {
+    if (confirm('¿Estás seguro de que deseas borrar el archivo actual? Esta acción no se puede deshacer.')) {
+        document.getElementById('borrar_archivo').value = '1';
+        
+        // Mostrar mensaje visual
+        const archivoActualDiv = document.querySelector('.from-blue-50');
+        if (archivoActualDiv) {
+            archivoActualDiv.classList.remove('from-blue-50', 'to-indigo-50', 'border-blue-200');
+            archivoActualDiv.classList.add('from-red-50', 'to-red-100', 'border-red-300');
+            
+            const iconDiv = archivoActualDiv.querySelector('.bg-red-500');
+            if (iconDiv) {
+                iconDiv.classList.remove('bg-red-500');
+                iconDiv.classList.add('bg-gray-400');
+            }
+            
+            // Agregar mensaje de confirmación
+            const mensaje = document.createElement('div');
+            mensaje.className = 'mt-2 p-2 bg-red-100 border border-red-300 rounded-lg text-red-700 text-sm';
+            mensaje.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>El archivo será borrado al guardar los cambios';
+            archivoActualDiv.appendChild(mensaje);
+            
+            // Deshabilitar botón de borrar
+            event.target.disabled = true;
+            event.target.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+        
+        // Hacer el campo de archivo requerido
+        document.getElementById('archivo_adjunto').required = true;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('editForm');
     const submitBtn = document.getElementById('submitBtn');
     const valorInput = document.getElementById('valor');
     const valorFormato = document.getElementById('valor_formato');
+    const archivoInput = document.getElementById('archivo_adjunto');
+
+    // Validar tamaño de archivo
+    if (archivoInput) {
+        archivoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const maxSize = 10 * 1024 * 1024; // 10MB en bytes
+                if (file.size > maxSize) {
+                    showError('archivo_error', 'El archivo no debe superar los 10MB');
+                    this.value = '';
+                    return;
+                }
+                
+                // Validar extensión
+                const allowedExtensions = /(\.pdf|\.doc|\.docx|\.jpg|\.jpeg|\.png)$/i;
+                if (!allowedExtensions.exec(file.name)) {
+                    showError('archivo_error', 'Formato de archivo no permitido');
+                    this.value = '';
+                    return;
+                }
+                
+                // Mostrar mensaje de confirmación
+                const archivoError = document.getElementById('archivo_error');
+                archivoError.textContent = `✓ Archivo seleccionado: ${file.name}`;
+                archivoError.classList.remove('hidden', 'text-red-500');
+                archivoError.classList.add('text-green-600');
+            }
+        });
+    }
 
     // Format currency as user types
     valorInput.addEventListener('input', function() {
@@ -314,26 +445,6 @@ document.addEventListener('DOMContentLoaded', function() {
         errorElement.textContent = message;
         errorElement.classList.remove('hidden');
     }
-
-    // Status change warning
-    const estadoSelect = document.getElementById('estado');
-    const originalEstado = '{{ $cuenta->estado }}';
-    
-    estadoSelect.addEventListener('change', function() {
-        if (this.value !== originalEstado) {
-            const warning = document.createElement('div');
-            warning.className = 'mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-800 text-sm';
-            warning.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Cambiar el estado puede afectar el flujo de aprobación.';
-            
-            // Remove existing warning
-            const existingWarning = estadoSelect.parentNode.querySelector('.bg-yellow-50');
-            if (existingWarning) {
-                existingWarning.remove();
-            }
-            
-            estadoSelect.parentNode.appendChild(warning);
-        }
-    });
 });
 </script>
 

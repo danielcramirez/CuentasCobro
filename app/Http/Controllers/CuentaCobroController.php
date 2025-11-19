@@ -138,34 +138,64 @@ class CuentaCobroController extends Controller
         $cuenta = CuentaCobro::findOrFail($id);
         $userRole = optional($user->role)->name;
         
-        // Verificar permisos
-        if ($userRole === 'contratista' && $cuenta->user_id !== $user->id) {
-            abort(403, 'No tienes permiso para editar esta cuenta de cobro.');
+        // Verificar permisos según rol y estado de la cuenta
+        if ($userRole === 'contratista') {
+            // Contratista solo puede editar sus propias cuentas
+            if ($cuenta->user_id !== $user->id) {
+                abort(403, 'No tienes permiso para editar esta cuenta de cobro.');
+            }
+            // Solo puede editar si está en borrador o rechazada
+            if (!in_array($cuenta->estado, ['borrador', 'rechazada'])) {
+                abort(403, 'Solo puedes editar cuentas en estado borrador o rechazada.');
+            }
         }
         
-        // Validar estado según rol
-        $estadosPermitidos = ['borrador', 'pendiente'];
-        if ($userRole === 'supervisor') {
-            $estadosPermitidos = array_merge($estadosPermitidos, ['revision', 'aprobado', 'rechazado']);
-        }
-        if ($userRole === 'ordenador_gasto') {
-            $estadosPermitidos = array_merge($estadosPermitidos, ['aprobado', 'rechazado']);
-        }
-        if ($userRole === 'tesoreria') {
-            $estadosPermitidos = array_merge($estadosPermitidos, ['pagado']);
+        // Validación dinámica del archivo
+        $archivoRules = [];
+        if ($request->input('borrar_archivo') == '1' || !$cuenta->archivo_adjunto) {
+            // Si se va a borrar el archivo o no existe, el nuevo archivo es requerido
+            $archivoRules = ['required', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'];
+        } else {
+            // Si ya existe y no se va a borrar, el archivo es opcional
+            $archivoRules = ['nullable', 'file', 'mimes:pdf,doc,docx,jpg,jpeg,png', 'max:10240'];
         }
         
         $request->validate([
             'fecha_emision' => 'required|date',
             'proyecto_servicio' => 'required|string|max:255',
             'valor' => 'required|numeric|min:0',
-            'estado' => 'required|string|in:' . implode(',', $estadosPermitidos),
+            'archivo_adjunto' => $archivoRules,
+            'borrar_archivo' => 'nullable|in:0,1',
         ]);
 
+        // Actualizar datos editables
         $cuenta->fecha_emision = $request->input('fecha_emision');
         $cuenta->proyecto_servicio = $request->input('proyecto_servicio');
         $cuenta->valor = $request->input('valor');
-        $cuenta->estado = $request->input('estado');
+        
+        // Manejar archivo adjunto
+        if ($request->input('borrar_archivo') == '1' && $cuenta->archivo_adjunto) {
+            // Borrar archivo anterior del storage
+            if (Storage::disk('public')->exists($cuenta->archivo_adjunto)) {
+                Storage::disk('public')->delete($cuenta->archivo_adjunto);
+            }
+            $cuenta->archivo_adjunto = null;
+        }
+        
+        // Si se sube un nuevo archivo (reemplazo)
+        if ($request->hasFile('archivo_adjunto')) {
+            // Borrar archivo anterior si existe
+            if ($cuenta->archivo_adjunto && Storage::disk('public')->exists($cuenta->archivo_adjunto)) {
+                Storage::disk('public')->delete($cuenta->archivo_adjunto);
+            }
+            
+            // Guardar nuevo archivo
+            $file = $request->file('archivo_adjunto');
+            $fileName = time() . '_' . $user->id . '_' . $file->getClientOriginalName();
+            $filePath = $file->storeAs('cuentas-cobro', $fileName, 'public');
+            $cuenta->archivo_adjunto = $filePath;
+        }
+        
         $cuenta->save();
 
         return redirect()->route('cuentas-cobro.mostrar')->with('success', 'Cuenta de cobro actualizada exitosamente.');
