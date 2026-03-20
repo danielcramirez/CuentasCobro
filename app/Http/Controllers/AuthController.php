@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Models\Roles;
+use App\Models\CuentaCobro;
 
 class AuthController extends Controller
 {
@@ -68,8 +69,8 @@ class AuthController extends Controller
             'userRoleDescription' => $user->role ? $user->role->description : 'Sin rol asignado'
         ];
 
-        // Datos específicos para el alcalde
-        if ($user->hasRole('alcalde')) {
+        // Datos específicos para el admin
+        if ($user->hasRole('admin')) {
             $dashboardData = array_merge($dashboardData, [
                 'totalUsers' => User::count(),
                 'totalRoles' => Roles::count(),
@@ -77,26 +78,54 @@ class AuthController extends Controller
                 'usersWithoutRoles' => User::whereNull('role_id')->count(),
                 'rolesStats' => Roles::withCount('users')->get(),
                 'recentUsers' => User::with('role')->latest()->limit(5)->get(),
-                'systemRoles' => ['contratista', 'supervisor', 'alcalde', 'ordenador_gasto', 'tesoreria', 'contratacion']
+                'pendingMayorApprovals' => CuentaCobro::where('cuenta_status', 'aprobada')
+                    ->where('planilla_status', 'aprobada')
+                    ->where('mayor_status', 'pendiente')
+                    ->count(),
+                'systemRoles' => ['contratista', 'apoyo a la supervisión', 'supervisor', 'admin']
             ]);
         }
 
-        // Datos específicos para supervisor
-        if ($user->hasRole('supervisor')) {
+        // Datos específicos para apoyo a la supervisión y supervisor
+        if ($user->hasAnyRole(['apoyo a la supervisión', 'apoyo a la supervision', 'apoyo a la supervicion', 'supervisor'])) {
             $dashboardData = array_merge($dashboardData, [
-                'pendingReviews' => 0, // Aquí irían las cuentas de cobro pendientes
-                'approvedToday' => 0,
-                'rejectedToday' => 0
+                'pendingReviews' => CuentaCobro::where(function ($query) {
+                    $query->where('cuenta_status', 'pendiente')
+                        ->orWhere('planilla_status', 'pendiente');
+                })->count(),
+                'approvedToday' => CuentaCobro::whereDate('supervisor_reviewed_at', now()->toDateString())
+                    ->where('cuenta_status', 'aprobada')
+                    ->where('planilla_status', 'aprobada')
+                    ->count(),
+                'rejectedToday' => CuentaCobro::whereDate('supervisor_reviewed_at', now()->toDateString())
+                    ->where(function ($query) {
+                        $query->where('cuenta_status', 'rechazada')
+                            ->orWhere('planilla_status', 'rechazada');
+                    })->count()
             ]);
         }
 
         // Datos específicos para contratista
         if ($user->hasRole('contratista')) {
             $dashboardData = array_merge($dashboardData, [
-                'myCuentasCobro' => 0, // Aquí irían sus cuentas de cobro
-                'pendingApproval' => 0,
-                'approved' => 0,
-                'rejected' => 0
+                'myCuentasCobro' => CuentaCobro::where('contractor_id', $user->id)->count(),
+                'pendingApproval' => CuentaCobro::where('contractor_id', $user->id)
+                    ->where(function ($query) {
+                        $query->where('cuenta_status', 'pendiente')
+                            ->orWhere('planilla_status', 'pendiente')
+                            ->orWhere('mayor_status', 'pendiente');
+                    })
+                    ->count(),
+                'approved' => CuentaCobro::where('contractor_id', $user->id)
+                    ->where('mayor_status', 'aprobada')
+                    ->count(),
+                'rejected' => CuentaCobro::where('contractor_id', $user->id)
+                    ->where(function ($query) {
+                        $query->where('cuenta_status', 'rechazada')
+                            ->orWhere('planilla_status', 'rechazada')
+                            ->orWhere('mayor_status', 'rechazada');
+                    })
+                    ->count()
             ]);
         }
 

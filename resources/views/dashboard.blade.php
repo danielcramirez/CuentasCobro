@@ -30,8 +30,8 @@
         </div>
     </div>
 
-    @if($userRole === 'alcalde')
-    <!-- Dashboard para Alcalde -->
+    @if($userRole === 'admin')
+    <!-- Dashboard para Admin -->
     <div class="row">
         <!-- Estadísticas Generales -->
         <div class="col-xl-3 col-md-6 mb-4">
@@ -102,6 +102,38 @@
                             <i class="fas fa-user-times fa-2x text-gray-300"></i>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Pendientes Alcalde
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $pendingMayorApprovals ?? 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-file-signature fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1">Aprobación final de pagos</h5>
+                        <p class="mb-0 text-muted">Revisa cuentas y planillas ya aprobadas por supervisor.</p>
+                    </div>
+                    <a href="{{ route('cuentas.index') }}" class="btn btn-success">Revisar cuentas aprobadas por supervisor</a>
                 </div>
             </div>
         </div>
@@ -208,13 +240,40 @@
     @if($userRole === 'supervisor')
     <!-- Dashboard para Supervisor -->
     <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Pendientes de revisar</h6>
+                    <h3 class="mb-0">{{ $pendingReviews ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Aprobadas hoy</h6>
+                    <h3 class="mb-0 text-success">{{ $approvedToday ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Rechazadas hoy</h6>
+                    <h3 class="mb-0 text-danger">{{ $rejectedToday ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
         <div class="col-12">
-            <div class="card shadow">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-user-check fa-4x text-success mb-3"></i>
-                    <h4>Panel de Supervisor</h4>
-                    <p class="text-muted">Aquí podrás revisar y aprobar cuentas de cobro.</p>
-                    <p class="text-muted">Esta funcionalidad se implementará próximamente.</p>
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1">Gestión de revisión</h5>
+                        <p class="mb-0 text-muted">Valida cuenta PDF y planilla PDF. Si rechazas, debes agregar motivo.</p>
+                    </div>
+                    <a href="{{ route('cuentas.index') }}" class="btn btn-primary">
+                        Ir a cuentas de cobro
+                    </a>
                 </div>
             </div>
         </div>
@@ -224,13 +283,49 @@
     @if($userRole === 'contratista')
     <!-- Dashboard para Contratista -->
     <div class="row">
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Mis cuentas</h6>
+                    <h3 class="mb-0">{{ $myCuentasCobro ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Pendientes</h6>
+                    <h3 class="mb-0 text-warning">{{ $pendingApproval ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Aprobadas</h6>
+                    <h3 class="mb-0 text-success">{{ $approved ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Rechazadas</h6>
+                    <h3 class="mb-0 text-danger">{{ $rejected ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
         <div class="col-12">
-            <div class="card shadow">
-                <div class="card-body text-center py-5">
-                    <i class="fas fa-user-tie fa-4x text-primary mb-3"></i>
-                    <h4>Panel de Contratista</h4>
-                    <p class="text-muted">Aquí podrás crear y gestionar tus cuentas de cobro.</p>
-                    <p class="text-muted">Esta funcionalidad se implementará próximamente.</p>
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1">Cargar documentos</h5>
+                        <p class="mb-0 text-muted">Sube cuenta de cobro PDF y pago de planilla PDF para revisión.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('cuentas.create') }}" class="btn btn-success">Nueva cuenta</a>
+                        <a href="{{ route('cuentas.index') }}" class="btn btn-outline-primary">Ver historial</a>
+                    </div>
                 </div>
             </div>
         </div>

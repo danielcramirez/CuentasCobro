@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\CuentaCobro;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -56,6 +57,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Un contratista puede tener muchas cuentas de cobro.
+     */
+    public function cuentasCobro()
+    {
+        return $this->hasMany(CuentaCobro::class, 'contractor_id', 'id');
+    }
+
+    /**
      * Verificar si el usuario tiene un rol específico
      */
     public function hasRole($roleName)
@@ -84,6 +93,6 @@ class User extends Authenticatable
      */
     public function isAdmin()
     {
-        return $this->hasAnyRole(['alcalde', 'ordenador_gasto']);
+        return $this->hasAnyRole(['admin']);
     }
 }

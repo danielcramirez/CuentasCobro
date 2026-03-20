@@ -38,7 +38,7 @@ class RolControler extends Controller
      */
     public function create()
     {
-        if (!Auth::user()->hasRole('alcalde')) {
+        if (!Auth::user()->hasRole('admin')) {
             return redirect('/dashboard')->with('error', 'No tienes permisos para crear roles.');
         }
 
@@ -51,7 +51,7 @@ class RolControler extends Controller
      */
     public function store(Request $request)
     {
-        if (!Auth::user()->hasRole('alcalde')) {
+        if (!Auth::user()->hasRole('admin')) {
             return redirect('/dashboard')->with('error', 'No tienes permisos para crear roles.');
         }
 
@@ -96,7 +96,7 @@ class RolControler extends Controller
      */
     public function edit(Roles $role)
     {
-        if (!Auth::user()->hasRole('alcalde')) {
+        if (!Auth::user()->hasRole('admin')) {
             return redirect()->route('roles.index')->with('error', 'No tienes permisos para editar roles.');
         }
 
@@ -108,11 +108,11 @@ class RolControler extends Controller
      */
     public function update(Request $request, Roles $role)
     {
-        if (!Auth::user()->hasRole('alcalde')) {
+        if (!Auth::user()->hasRole('admin')) {
             return redirect()->route('roles.index')->with('error', 'No tienes permisos para actualizar roles.');
         }
 
-        $isSystemRole = in_array($role->name, ['contratista', 'supervisor', 'alcalde', 'ordenador_gasto', 'tesoreria', 'contratacion']);
+        $isSystemRole = in_array($role->name, ['contratista', 'apoyo a la supervisión', 'supervisor', 'admin']);
 
         $rules = [
             'permissions' => 'array',
@@ -152,11 +152,11 @@ class RolControler extends Controller
      */
     public function destroy(Roles $role)
     {
-        if (!Auth::user()->hasRole('alcalde')) {
+        if (!Auth::user()->hasRole('admin')) {
             return redirect()->route('roles.index')->with('error', 'No tienes permisos para eliminar roles.');
         }
 
-        if (in_array($role->name, ['contratista', 'supervisor', 'alcalde', 'ordenador_gasto', 'tesoreria', 'contratacion'])) {
+        if (in_array($role->name, ['contratista', 'apoyo a la supervisión', 'supervisor', 'admin'])) {
             return redirect()->route('roles.index')->with('error', 'No se pueden eliminar roles del sistema.');
         }
 
@@ -174,7 +174,7 @@ class RolControler extends Controller
      */
     public function assignRole(Request $request)
     {
-        if (!Auth::user()->hasAnyRole(['alcalde', 'contratacion'])) {
+        if (!Auth::user()->hasAnyRole(['admin'])) {
             return response()->json(['success' => false, 'error' => 'No autorizado'], 403);
         }
 
@@ -195,7 +195,7 @@ class RolControler extends Controller
      */
     public function removeRole(Request $request)
     {
-        if (!Auth::user()->hasAnyRole(['alcalde', 'contratacion'])) {
+        if (!Auth::user()->hasAnyRole(['admin'])) {
             return response()->json(['success' => false, 'error' => 'No autorizado'], 403);
         }
 
@@ -215,7 +215,7 @@ class RolControler extends Controller
      */
     public function getUsersWithoutRole()
     {
-        if (!Auth::user()->hasAnyRole(['alcalde', 'contratacion'])) {
+        if (!Auth::user()->hasAnyRole(['admin'])) {
             return response()->json(['success' => false, 'error' => 'No autorizado'], 403);
         }
 

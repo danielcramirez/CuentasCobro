@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CrearUsuario;
 use App\Http\Controllers\RolControler;
+use App\Http\Controllers\CuentaCobroController;
 
 // Ruta raíz redirige al login
 Route::get('/', function () {
@@ -39,6 +40,21 @@ Route::middleware(['auth'])->group(function () {
     
     // Ruta personalizada para show (usando {role} en lugar de {id})
     Route::get('/roles/{role}', [RolControler::class, 'show'])->name('roles.show');
+
+    // Flujo de cuentas de cobro
+    Route::prefix('cuentas')->name('cuentas.')->group(function () {
+        Route::get('/', [CuentaCobroController::class, 'index'])->name('index');
+        Route::get('/create', [CuentaCobroController::class, 'create'])->middleware('check.role:contratista')->name('create');
+        Route::post('/', [CuentaCobroController::class, 'store'])->middleware('check.role:contratista')->name('store');
+        Route::get('/{cuentaCobro}', [CuentaCobroController::class, 'show'])->name('show');
+        Route::post('/{cuentaCobro}/supervisor-review', [CuentaCobroController::class, 'supervisorReview'])->middleware('check.role:apoyo a la supervisión,apoyo a la supervision,apoyo a la supervicion,supervisor')->name('supervisor.review');
+        Route::post('/{cuentaCobro}/documento/{documento}/review', [CuentaCobroController::class, 'reviewDocumento'])->middleware('check.role:apoyo a la supervisión,apoyo a la supervision,apoyo a la supervicion,supervisor')->name('documento.review');
+        Route::post('/{cuentaCobro}/alcalde-review', [CuentaCobroController::class, 'mayorReview'])->middleware('check.role:admin')->name('alcalde.review');
+        Route::post('/{cuentaCobro}/resubmit', [CuentaCobroController::class, 'resubmit'])->middleware('check.role:contratista')->name('resubmit');
+        Route::get('/{cuentaCobro}/download/{type}', [CuentaCobroController::class, 'download'])->name('download');
+        Route::get('/{cuentaCobro}/preview/{type}', [CuentaCobroController::class, 'preview'])->name('preview');
+        Route::get('/{cuentaCobro}/documento/{documento}/preview', [CuentaCobroController::class, 'previewDocumento'])->name('documento.preview');
+    });
     
     // Rutas adicionales para gestión de roles y usuarios
     Route::prefix('roles')->name('roles.')->group(function () {
@@ -51,7 +67,7 @@ Route::middleware(['auth'])->group(function () {
     });
     
     // Rutas adicionales que podrías necesitar más adelante
-    Route::prefix('admin')->middleware(['auth', 'check.role:alcalde'])->name('admin.')->group(function () {
+    Route::prefix('admin')->middleware(['auth', 'check.role:admin'])->name('admin.')->group(function () {
         
         // Gestión de usuarios (futuras funcionalidades)
         Route::prefix('users')->name('users.')->group(function () {
@@ -81,15 +97,15 @@ Route::middleware(['auth'])->group(function () {
         })->name('dashboard');
     });
     
-    // Solo para supervisores
-    Route::middleware(['check.role:supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
+    // Solo para apoyo a la supervisión y supervisores
+    Route::middleware(['check.role:apoyo a la supervisión,apoyo a la supervision,apoyo a la supervicion,supervisor'])->prefix('supervisor')->name('supervisor.')->group(function () {
         Route::get('/dashboard', function() {
             return view('supervisor.dashboard');
         })->name('dashboard');
     });
     
-    // Solo para roles administrativos (alcalde, ordenador del gasto)
-    Route::middleware(['check.role:alcalde,ordenador_gasto'])->prefix('admin')->name('admin.')->group(function () {
+    // Solo para roles administrativos (admin)
+    Route::middleware(['check.role:admin'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/reports', function() {
             return view('admin.reports');
         })->name('reports');

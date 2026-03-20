@@ -38,7 +38,7 @@
                             @case('supervisor')
                                 <i class="fas fa-user-check text-success me-2"></i>
                                 @break
-                            @case('alcalde')
+                            @case('admin')
                                 <i class="fas fa-crown text-warning me-2"></i>
                                 @break
                             @case('ordenador_gasto')
@@ -71,7 +71,7 @@
 
             <!-- Alertas de estado del sistema -->
             @php
-            $isSystemRole = in_array($role->name, ['contratista', 'supervisor', 'alcalde', 'ordenador_gasto', 'tesoreria', 'contratacion']);
+            $isSystemRole = in_array($role->name, ['contratista', 'apoyo a la supervisión', 'supervisor', 'admin']);
             @endphp
 
             @if($isSystemRole)

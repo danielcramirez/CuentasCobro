@@ -26,8 +26,8 @@ class RoleSeeder extends Seeder
                 ]
             ],
             [
-                'name' => 'supervisor',
-                'description' => 'Supervisor - Revisa y valida las cuentas de cobro',
+                'name' => 'apoyo a la supervisión',
+                'description' => 'Apoyo a la Supervisión - Revisa y valida las cuentas de cobro',
                 'permissions' => [
                     'view_cuenta_cobro',
                     'review_cuenta_cobro',
@@ -38,51 +38,22 @@ class RoleSeeder extends Seeder
                 ]
             ],
             [
-                'name' => 'alcalde',
-                'description' => 'Alcalde - Aprobación ejecutiva final',
+                'name' => 'supervisor',
+                'description' => 'Supervisión - Aprobación ejecutiva final',
                 'permissions' => [
                     'view_all_cuenta_cobro',
                     'final_approval',
-                    'override_decisions',
-                    'view_reports',
+                    'override_decisions'
+                ]
+            ],
+            [
+                'name' => 'admin',
+                'description' => 'Administrador - Gestión total del sistema',
+                'permissions' => [
                     'manage_users',
+                    'manage_roles',
+                    'view_reports',
                     'system_admin'
-                ]
-            ],
-            [
-                'name' => 'ordenador_gasto',
-                'description' => 'Ordenador del Gasto - Autoriza los pagos',
-                'permissions' => [
-                    'view_cuenta_cobro',
-                    'authorize_payment',
-                    'view_budget',
-                    'manage_budget',
-                    'generate_payment_orders',
-                    'view_financial_reports'
-                ]
-            ],
-            [
-                'name' => 'tesoreria',
-                'description' => 'Tesorería - Procesa los pagos',
-                'permissions' => [
-                    'view_cuenta_cobro',
-                    'process_payment',
-                    'generate_checks',
-                    'bank_transfers',
-                    'payment_confirmation',
-                    'financial_reports'
-                ]
-            ],
-            [
-                'name' => 'contratacion',
-                'description' => 'Contratación - Administra contratos y contratistas',
-                'permissions' => [
-                    'manage_contracts',
-                    'manage_contractors',
-                    'view_all_cuenta_cobro',
-                    'contract_validation',
-                    'contractor_registration',
-                    'contract_reports'
                 ]
             ]
         ];

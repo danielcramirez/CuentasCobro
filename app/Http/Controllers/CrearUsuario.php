@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\Roles;
 
 class CrearUsuario extends Controller
 {
@@ -22,10 +23,13 @@ class CrearUsuario extends Controller
             'password' => 'required|string|min:8|confirmed',
         ]);
 
+        $contratistaRole = Roles::where('name', 'contratista')->first();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role_id' => $contratistaRole?->id,
         ]);
 
         Auth::login($user);

@@ -18,7 +18,7 @@
                     Gestión de Roles
                 </h2>
                 
-                @if(Auth::user()->hasRole('alcalde'))
+                @if(Auth::user()->hasRole('admin'))
                 <a href="{{ route('roles.create') }}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i>
                     Nuevo Rol
@@ -98,7 +98,7 @@
                         <div class="card-body">
                             <div class="d-flex justify-content-between">
                                 <div>
-                                    <h4 class="mb-0">6</h4>
+                                    <h4 class="mb-0">4</h4>
                                     <small>Roles del Sistema</small>
                                 </div>
                                 <div class="align-self-center">
@@ -150,7 +150,7 @@
                                                 @case('supervisor')
                                                     <i class="fas fa-user-check text-success me-1"></i>
                                                     @break
-                                                @case('alcalde')
+                                                @case('admin')
                                                     <i class="fas fa-crown text-warning me-1"></i>
                                                     @break
                                                 @case('ordenador_gasto')
@@ -197,11 +197,11 @@
                                             <a href="{{ route('roles.show', $role->id) }}" class="btn btn-outline-info" title="Ver detalles">
                                                 <i class="fas fa-eye"></i>
                                             </a>
-                                            @if(Auth::user()->hasRole('alcalde'))
+                                            @if(Auth::user()->hasRole('admin'))
                                             <a href="{{ route('roles.edit', $role->id) }}" class="btn btn-outline-warning" title="Editar">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            @if(!in_array($role->name, ['contratista', 'supervisor', 'alcalde', 'ordenador_gasto', 'tesoreria', 'contratacion']) && $role->users_count == 0)
+                                            @if(!in_array($role->name, ['contratista', 'apoyo a la supervisión', 'supervisor', 'admin']) && $role->users_count == 0)
                                             <form action="{{ route('roles.destroy', $role->id) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este rol?')">
                                                 @csrf
                                                 @method('DELETE')
@@ -243,7 +243,7 @@
                         <i class="fas fa-users-cog fa-4x text-muted mb-3"></i>
                         <h4 class="text-muted">No hay roles registrados</h4>
                         <p class="text-muted">Comienza creando el primer rol del sistema.</p>
-                        @if(Auth::user()->hasRole('alcalde'))
+                        @if(Auth::user()->hasRole('admin'))
                         <a href="{{ route('roles.create') }}" class="btn btn-primary">
                             <i class="fas fa-plus me-1"></i>
                             Crear Primer Rol

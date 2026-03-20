@@ -15,11 +15,11 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        // Buscar el rol de alcalde
-        $alcaldeRole = Roles::where('name', 'alcalde')->first();
+        // Buscar el rol de admin
+        $adminRole = Roles::where('name', 'admin')->first();
         
-        if (!$alcaldeRole) {
-            $this->command->error('El rol de alcalde no existe. Ejecuta primero el RoleSeeder.');
+        if (!$adminRole) {
+            $this->command->error('El rol de admin no existe. Ejecuta primero el RoleSeeder.');
             return;
         }
 
@@ -30,7 +30,7 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Daniel Ramirez',
                 'email' => 'daniel00250@hotmail.com',
                 'password' => Hash::make('cosa1234'),
-                'role_id' => $alcaldeRole->id,
+                'role_id' => $adminRole->id,
                 'email_verified_at' => now(),
             ]
         );
@@ -40,14 +40,14 @@ class AdminUserSeeder extends Seeder
             $this->command->info('   👤 Nombre: Daniel Ramirez');
             $this->command->info('   📧 Email: daniel00250@hotmail.com');
             $this->command->info('   🔑 Contraseña: cosa1234');
-            $this->command->info('   👑 Rol: Alcalde');
+            $this->command->info('   👑 Rol: Admin');
         } else {
             $this->command->info('ℹ️  El usuario administrador ya existe.');
             
             // Actualizar el rol si es necesario
-            if ($admin->role_id !== $alcaldeRole->id) {
-                $admin->update(['role_id' => $alcaldeRole->id]);
-                $this->command->info('✅ Rol actualizado a Alcalde.');
+            if ($admin->role_id !== $adminRole->id) {
+                $admin->update(['role_id' => $adminRole->id]);
+                $this->command->info('✅ Rol actualizado a Admin.');
             }
         }
     }
