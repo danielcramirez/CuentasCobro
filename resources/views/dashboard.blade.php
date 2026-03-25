@@ -112,7 +112,7 @@
                     <div class="row no-gutters align-items-center">
                         <div class="col mr-2">
                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Pendientes Alcalde
+                                Pendientes Supervisor
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $pendingMayorApprovals ?? 0 }}</div>
                         </div>
@@ -139,7 +139,7 @@
         </div>
     </div>
 
-    <!-- Acciones Rápidas para Alcalde -->
+    <!-- Acciones Rápidas para Supervisor -->
     <div class="row">
         <div class="col-lg-6 mb-4">
             <div class="card shadow">
