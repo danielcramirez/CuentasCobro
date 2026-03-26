@@ -36,9 +36,27 @@
         $esRevisionSupervisor = $esApoyo;
         $documentosOrdenados = $cuenta->documentos->sortBy('numero_documento')->values();
         $primerDocumento = $documentosOrdenados->first();
+        $documentosConComentarioApoyo = $documentosOrdenados
+            ->filter(fn ($documento) => filled($documento->comentario_supervisor))
+            ->values();
+        $observacionSupervisor = null;
+        if ($cuenta->documentosFirmadosCompletos()) {
+            $observacionSupervisor = $cuenta->supervisor_comment;
+        }
+        if (blank($observacionSupervisor) && $cuenta->documentosFirmadosCompletos()) {
+            $observacionSupervisor = 'Documentos 1 y 2 firmados cargados por supervisor.';
+            if ($cuenta->supervisor?->name) {
+                $observacionSupervisor .= ' Responsable: ' . $cuenta->supervisor->name . '.';
+            }
+            if ($cuenta->updated_at) {
+                $observacionSupervisor .= ' Ultima actualizacion: ' . $cuenta->updated_at->format('d/m/Y H:i') . '.';
+            }
+        }
+        $estadoApoyo = $cuenta->getEstadoApoyoRevision();
+        $estadoSupervisor = $cuenta->getEstadoSupervisorRevision();
+        $estadoCentral = $cuenta->getEstadoCentralRevision();
         $etiquetaDevolucion = match($cuenta->returned_stage) {
             'supervisor' => 'Devuelta por Apoyo a la Supervision',
-            'admin' => 'Devuelta por Administración',
             'tesoreria' => 'Devuelta por Central de Cuentas',
             'fiduprevisora' => 'Devuelta por Fiduprevisora',
             default => null,
@@ -47,7 +65,7 @@
 
     <div class="row g-4">
         <div class="col-lg-7">
-            @if($esRevisionSupervisor || $user->hasAnyRole(['central de cuentas', 'tesoreria', 'fiduprevisora']))
+            @if($esRevisionSupervisor || $esSupervisor || $user->hasAnyRole(['central de cuentas', 'tesoreria', 'fiduprevisora']))
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white">
                         <strong>Visor documental</strong>
@@ -221,6 +239,52 @@
                                     <label class="form-label">Documento 2 firmado (PDF)</label>
                                     <input type="file" class="form-control" name="documento_2_firmado" accept="application/pdf" required>
                                 </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Comentario del supervisor</label>
+                                    <div class="js-wysiwyg-wrapper">
+                                        <div class="js-wysiwyg-toolbar d-flex flex-wrap gap-2 mb-2" role="group" aria-label="Herramientas de edicion">
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-secondary" data-command="undo" title="Deshacer">↶</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="redo" title="Rehacer">↷</button>
+                                            </div>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-secondary" data-command="bold" title="Negrita"><strong>B</strong></button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="italic" title="Cursiva"><em>I</em></button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="underline" title="Subrayado"><u>U</u></button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="strikeThrough" title="Tachado"><s>S</s></button>
+                                            </div>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="h2">H2</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="h3">H3</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="formatBlock" data-value="p">Párrafo</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="blockquote">Cita</button>
+                                            </div>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-secondary" data-command="insertUnorderedList">Lista</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="insertOrderedList">Numerada</button>
+                                            </div>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-secondary" data-command="justifyLeft">Izq</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="justifyCenter">Centro</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="justifyRight">Der</button>
+                                            </div>
+                                            <div class="btn-group btn-group-sm" role="group">
+                                                <button type="button" class="btn btn-outline-secondary js-wysiwyg-link">Enlace</button>
+                                                <button type="button" class="btn btn-outline-secondary js-wysiwyg-image">Imagen</button>
+                                                <button type="button" class="btn btn-outline-secondary" data-command="removeFormat">Limpiar</button>
+                                            </div>
+                                            <input type="file" class="d-none js-wysiwyg-image-input" accept="image/*">
+                                        </div>
+                                        <div
+                                            class="form-control js-wysiwyg-editor review-wysiwyg"
+                                            contenteditable="true"
+                                            data-target="supervisor-upload-comment"
+                                            data-placeholder="Escribe el comentario del supervisor. Puedes pegar texto enriquecido o una imagen."
+                                        >{!! old('comment', $cuenta->supervisor_comment) !!}</div>
+                                        <textarea name="comment" id="supervisor-upload-comment" class="d-none">{!! old('comment', $cuenta->supervisor_comment) !!}</textarea>
+                                        <div class="form-text">Puedes usar formato enriquecido, pegar imágenes o insertarlas manualmente.</div>
+                                    </div>
+                                </div>
                                 <button class="btn btn-primary" type="submit">Cargar firmados y enviar a Central de Cuentas</button>
                             </form>
                         @endif
@@ -277,9 +341,32 @@
                     <strong>Estado del flujo</strong>
                 </div>
                 <div class="card-body">
-                    <p><strong>Cuenta:</strong> {{ ucfirst($cuenta->cuenta_status) }}</p>
-                    <p><strong>Planilla:</strong> {{ ucfirst($cuenta->planilla_status) }}</p>
-                    <p><strong>Central de Cuentas:</strong> {{ ucfirst($cuenta->tesoreria_status) }}</p>
+                    <p>
+                        <strong>Apoyo a la supervisión:</strong>
+                        @if($estadoApoyo === 'aprobada')
+                            Aprobada
+                        @elseif($estadoApoyo === 'rechazada')
+                            Rechazada
+                        @else
+                            Pendiente
+                        @endif
+                    </p>
+                    <p>
+                        <strong>Supervisor:</strong>
+                        {{ $estadoSupervisor === 'aprobada' ? 'Aprobada' : 'Pendiente' }}
+                    </p>
+                    <p>
+                        <strong>Central de Cuentas:</strong>
+                        @if($estadoCentral === 'aprobada')
+                            Aprobada
+                        @elseif($estadoCentral === 'rechazada')
+                            Rechazada
+                        @elseif($estadoCentral === 'pendiente_central')
+                            Pendiente Central
+                        @else
+                            Pendiente
+                        @endif
+                    </p>
                     <p><strong>Fiduprevisora:</strong>
                         @if($cuenta->fiduprevisora_status === 'en_revision')
                             En revisión documental
@@ -305,8 +392,23 @@
                     <strong>Observaciones</strong>
                 </div>
                 <div class="card-body">
-                    <p><strong>Apoyo a supervision cuenta:</strong><br>{!! $cuenta->cuenta_supervisor_comment ?: 'Sin comentarios' !!}</p>
-                    <p><strong>Apoyo a supervision planilla:</strong><br>{!! $cuenta->planilla_supervisor_comment ?: 'Sin comentarios' !!}</p>
+                    <div class="mb-3">
+                        <strong>Apoyo a supervision:</strong><br>
+                        @if($documentosConComentarioApoyo->isNotEmpty())
+                            @foreach($documentosConComentarioApoyo as $documentoObservado)
+                                <div class="{{ $loop->last ? '' : 'mb-3' }}">
+                                    <div class="fw-semibold">
+                                        Documento {{ $documentoObservado->numero_documento }}:
+                                        {{ $documentoObservado->nombre_documento }}
+                                    </div>
+                                    <div>{!! $documentoObservado->comentario_supervisor !!}</div>
+                                </div>
+                            @endforeach
+                        @else
+                            <div>Sin comentarios</div>
+                        @endif
+                    </div>
+                    <p><strong>Supervisor:</strong><br>{!! $observacionSupervisor ?: 'Sin comentarios' !!}</p>
                     <p><strong>Central de Cuentas:</strong><br>{!! $cuenta->tesoreria_comment ?: 'Sin comentarios' !!}</p>
                     <p class="mb-0"><strong>Fiduprevisora:</strong><br>{!! $cuenta->fiduprevisora_comment ?: 'Sin comentarios' !!}</p>
                 </div>

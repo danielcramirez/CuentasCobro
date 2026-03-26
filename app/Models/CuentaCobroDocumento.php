@@ -60,6 +60,7 @@ class CuentaCobroDocumento extends Model
             14 => 'Certificado de Disponibilidad Presupuestal - CDP',
             15 => 'Registro Presupuestal - RP',
             16 => 'Registro Único Tributario - RUT con fecha inferior a treinta (30) días',
+            17 => 'Memorando de la cuenta anterior',
         ];
     }
 
@@ -70,10 +71,10 @@ class CuentaCobroDocumento extends Model
     {
         if ($numero_cuenta == 1) {
             // Primera cuenta: todos los documentos (1-16)
-            return array_keys(self::getCatalogo());
+            return range(1, 16);
         } else {
-            // Cuentas siguientes: solo 1-6
-            return [1, 2, 3, 4, 5, 6];
+            // Cuentas siguientes: 1-6 y memorando de la cuenta anterior
+            return [1, 2, 3, 4, 5, 6, 17];
         }
     }
 }

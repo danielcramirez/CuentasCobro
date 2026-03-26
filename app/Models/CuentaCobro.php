@@ -25,6 +25,7 @@ class CuentaCobro extends Model
         'planilla_status',
         'cuenta_supervisor_comment',
         'planilla_supervisor_comment',
+        'supervisor_comment',
         'supervisor_id',
         'supervisor_reviewed_at',
         'mayor_status',
@@ -145,6 +146,53 @@ class CuentaCobro extends Model
     public function canGoToFiduprevisora(): bool
     {
         return $this->tesoreria_status === 'aprobada' && $this->documentosFirmadosCompletos();
+    }
+
+    public function getEstadoApoyoRevision(): string
+    {
+        $requeridos = $this->getDocumentosRequeridos();
+        $documentos = $this->documentos
+            ->whereIn('numero_documento', $requeridos);
+
+        if (
+            $this->returned_stage === 'supervisor'
+            || $documentos->contains(fn ($doc) => $doc->estado === 'rechazado')
+            || $this->cuenta_status === 'rechazada'
+            || $this->planilla_status === 'rechazada'
+        ) {
+            return 'rechazada';
+        }
+
+        if (
+            $documentos->count() === count($requeridos)
+            && $documentos->every(fn ($doc) => $doc->estado === 'validado')
+        ) {
+            return 'aprobada';
+        }
+
+        return 'pendiente';
+    }
+
+    public function getEstadoSupervisorRevision(): string
+    {
+        return $this->documentosFirmadosCompletos() ? 'aprobada' : 'pendiente';
+    }
+
+    public function getEstadoCentralRevision(): string
+    {
+        if ($this->tesoreria_status === 'aprobada') {
+            return 'aprobada';
+        }
+
+        if ($this->tesoreria_status === 'rechazada' || $this->returned_stage === 'tesoreria') {
+            return 'rechazada';
+        }
+
+        if ($this->getEstadoApoyoRevision() === 'aprobada' && $this->documentosFirmadosCompletos()) {
+            return 'pendiente_central';
+        }
+
+        return 'pendiente';
     }
 
     public function documentosFirmadosCompletos(): bool

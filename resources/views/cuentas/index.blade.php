@@ -45,15 +45,9 @@
                     <tbody>
                         @forelse($cuentas as $cuenta)
                             @php
-                                $estadoApoyo = 'pendiente';
-
-                                if ($cuenta->cuenta_status === 'rechazada' || $cuenta->planilla_status === 'rechazada') {
-                                    $estadoApoyo = 'rechazada';
-                                } elseif ($cuenta->cuenta_status === 'aprobada' && $cuenta->planilla_status === 'aprobada') {
-                                    $estadoApoyo = 'aprobada';
-                                }
-
-                                $estadoSupervisor = $cuenta->documentosFirmadosCompletos() ? 'aprobada' : 'pendiente';
+                                $estadoApoyo = $cuenta->getEstadoApoyoRevision();
+                                $estadoSupervisor = $cuenta->getEstadoSupervisorRevision();
+                                $estadoCentral = $cuenta->getEstadoCentralRevision();
                             @endphp
                             <tr>
                                 <td>{{ $cuenta->id }}</td>
@@ -76,11 +70,11 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($cuenta->tesoreria_status === 'aprobada')
+                                    @if($estadoCentral === 'aprobada')
                                         <span class="badge bg-success">Aprobada</span>
-                                    @elseif($cuenta->tesoreria_status === 'rechazada')
+                                    @elseif($estadoCentral === 'rechazada')
                                         <span class="badge bg-danger">Rechazada</span>
-                                    @elseif($cuenta->documentosFirmadosCompletos() && $estadoApoyo === 'aprobada')
+                                    @elseif($estadoCentral === 'pendiente_central')
                                         <span class="badge bg-warning text-dark">Pendiente Central</span>
                                     @else
                                         <span class="badge bg-secondary">Pendiente</span>

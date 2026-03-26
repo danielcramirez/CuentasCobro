@@ -105,14 +105,14 @@
 
                         <div id="regla-documentos" class="alert alert-info mt-4 mb-0">
                             <i class="fas fa-circle-info me-1"></i>
-                            Regla activa: si es la primera cuenta debes cargar 16 documentos por separado. Desde la segunda en adelante solo debes cargar del 1 al 6.
+                            Regla activa: si es la primera cuenta debes cargar 16 documentos por separado. Desde la segunda en adelante debes cargar del 1 al 6 y el memorando de la cuenta anterior.
                         </div>
                     </div>
                 </div>
 
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white py-3">
-                        <h2 class="h5 mb-0">2. Documentos obligatorios (1 al 6)</h2>
+                        <h2 class="h5 mb-0">2. Documentos obligatorios (1 al 6 y 17 (memorando) desde la segunda cuenta)</h2>
                     </div>
                     <div class="card-body p-4">
                         <div class="vstack gap-3">
@@ -144,6 +144,11 @@
                             <div>
                                 <label class="form-label">6. Planilla de pago de seguridad social del mes inmediatamente anterior o del mes actual. (PDF)</label>
                                 <input type="file" class="form-control" name="documentos[6]" accept="application/pdf" required>
+                            </div>
+
+                            <div id="documento-17-wrapper" class="d-none">
+                                <label class="form-label">17. Memorando de la cuenta anterior. (PDF)</label>
+                                <input type="file" class="form-control" name="documentos[17]" accept="application/pdf">
                             </div>
                         </div>
                     </div>
@@ -339,7 +344,7 @@
             reglaDocumentos.className = esPrimera ? 'alert alert-primary mt-4 mb-0' : 'alert alert-info mt-4 mb-0';
             reglaDocumentos.innerHTML = esPrimera
                 ? '<i class="fas fa-circle-info me-1"></i> Regla activa: primera cuenta. Debes cargar documentos 1 al 16.'
-                : '<i class="fas fa-circle-info me-1"></i> Regla activa: segunda o siguientes. Solo debes cargar documentos 1 al 6.';
+                : '<i class="fas fa-circle-info me-1"></i> Regla activa: segunda o siguientes. Debes cargar documentos 1 al 6 y el memorando de la cuenta anterior.';
 
             contenedor.querySelectorAll('input[type="file"]').forEach((input) => {
                 input.required = esPrimera;
@@ -348,6 +353,19 @@
                     updateZoneInfo(input);
                 }
             });
+
+            const documento17Wrapper = document.getElementById('documento-17-wrapper');
+            const documento17Input = documento17Wrapper?.querySelector('input[type="file"]');
+
+            if (documento17Wrapper && documento17Input) {
+                documento17Wrapper.classList.toggle('d-none', esPrimera);
+                documento17Input.required = !esPrimera;
+
+                if (esPrimera) {
+                    documento17Input.value = '';
+                    updateZoneInfo(documento17Input);
+                }
+            }
         }
 
         setupDropZones();

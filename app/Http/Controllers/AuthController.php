@@ -140,18 +140,22 @@ class AuthController extends Controller
                 'myCuentasCobro' => CuentaCobro::where('contractor_id', $user->id)->count(),
                 'pendingApproval' => CuentaCobro::where('contractor_id', $user->id)
                     ->where(function ($query) {
-                        $query->where('cuenta_status', 'pendiente')
-                            ->orWhere('planilla_status', 'pendiente');
+                        $query->whereNull('returned_stage')
+                            ->orWhere('returned_stage', '');
                     })
+                    ->where('fiduprevisora_status', '!=', 'pagado')
                     ->count(),
                 'approved' => CuentaCobro::where('contractor_id', $user->id)
-                    ->where('cuenta_status', 'aprobada')
-                    ->where('planilla_status', 'aprobada')
+                    ->where('fiduprevisora_status', 'pagado')
                     ->count(),
                 'rejected' => CuentaCobro::where('contractor_id', $user->id)
                     ->where(function ($query) {
                         $query->where('cuenta_status', 'rechazada')
                             ->orWhere('planilla_status', 'rechazada');
+                    })
+                    ->orWhere(function ($query) use ($user) {
+                        $query->where('contractor_id', $user->id)
+                            ->whereNotNull('returned_stage');
                     })
                     ->count()
             ]);

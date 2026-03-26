@@ -161,6 +161,7 @@ class CuentaCobroController extends Controller
         $request->validate([
             'documento_1_firmado' => ['required', 'file', 'mimes:pdf', 'max:10240'],
             'documento_2_firmado' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+            'comment' => ['nullable', 'string', 'max:' . self::RICH_TEXT_MAX_LENGTH],
         ]);
 
         $path1 = $request->file('documento_1_firmado')->store("cuentas/{$cuentaCobro->id}/firmados", 'local');
@@ -169,8 +170,9 @@ class CuentaCobroController extends Controller
         $cuentaCobro->update($this->filterCuentaCobroAttributes([
             'documento_1_firmado_path' => $path1,
             'documento_2_firmado_path' => $path2,
+            'supervisor_comment' => $this->sanitizeRichText($request->input('comment')),
             'tesoreria_status' => 'pendiente',
-            'tesoreria_comment' => 'Documentos firmados cargados. Disponible para Central de Cuentas.',
+            'tesoreria_comment' => '',
             'tesoreria_id' => null,
             'tesoreria_reviewed_at' => null,
             'fiduprevisora_status' => 'pendiente',
@@ -372,6 +374,7 @@ class CuentaCobroController extends Controller
                 'planilla_status' => 'pendiente',
                 'cuenta_supervisor_comment' => null,
                 'planilla_supervisor_comment' => null,
+                'supervisor_comment' => null,
                 'supervisor_id' => null,
                 'supervisor_reviewed_at' => null,
                 'tesoreria_status' => 'pendiente',
@@ -630,6 +633,7 @@ class CuentaCobroController extends Controller
             'planilla_status' => $allValidated ? 'aprobada' : ($docPlanilla?->estado === 'rechazado' ? 'rechazada' : ($docPlanilla?->estado === 'validado' ? 'aprobada' : 'pendiente')),
             'cuenta_supervisor_comment' => $docCuenta?->comentario_supervisor,
             'planilla_supervisor_comment' => $docPlanilla?->comentario_supervisor,
+            'supervisor_comment' => null,
             'supervisor_id' => Auth::id(),
             'supervisor_reviewed_at' => now(),
             'tesoreria_status' => 'pendiente',
@@ -695,6 +699,7 @@ class CuentaCobroController extends Controller
             'planilla_status' => $docPlanilla?->estado === 'validado' ? 'aprobada' : 'pendiente',
             'cuenta_supervisor_comment' => $docCuenta?->comentario_supervisor,
             'planilla_supervisor_comment' => $docPlanilla?->comentario_supervisor,
+            'supervisor_comment' => null,
             'supervisor_id' => null,
             'supervisor_reviewed_at' => null,
             'tesoreria_status' => 'pendiente',

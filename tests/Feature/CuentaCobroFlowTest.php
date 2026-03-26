@@ -48,14 +48,14 @@ class CuentaCobroFlowTest extends TestCase
             ->post(route('cuentas.store'), [
                 'billing_month' => '2026-04',
                 'numero_cuenta' => 2,
-                'documentos' => $this->fakeDocuments([1, 2, 3, 4, 5, 6]),
+                'documentos' => $this->fakeDocuments([1, 2, 3, 4, 5, 6, 17]),
             ])
             ->assertRedirect(route('cuentas.index'));
 
         $cuenta = CuentaCobro::query()->latest('id')->firstOrFail();
         $documentos = $cuenta->documentos()->orderBy('numero_documento')->get();
 
-        $this->assertCount(6, $documentos);
+        $this->assertCount(7, $documentos);
         $this->assertSame('pendiente', $cuenta->cuenta_status);
         $this->assertSame('pendiente', $cuenta->planilla_status);
         $this->assertSame('pendiente', $cuenta->mayor_status);
@@ -165,7 +165,7 @@ class CuentaCobroFlowTest extends TestCase
             ->post(route('cuentas.store'), [
                 'billing_month' => '2026-05',
                 'numero_cuenta' => 2,
-                'documentos' => $this->fakeDocuments([1, 2, 3, 4, 5, 6]),
+                'documentos' => $this->fakeDocuments([1, 2, 3, 4, 5, 6, 17]),
             ])
             ->assertRedirect(route('cuentas.index'));
 
@@ -187,7 +187,7 @@ class CuentaCobroFlowTest extends TestCase
             ->post(route('cuentas.store'), [
                 'billing_month' => '2026-06',
                 'numero_cuenta' => 2,
-                'documentos' => $this->fakeDocuments([1, 2, 3, 4, 5, 6]),
+                'documentos' => $this->fakeDocuments([1, 2, 3, 4, 5, 6, 17]),
             ])
             ->assertRedirect(route('cuentas.index'));
 
