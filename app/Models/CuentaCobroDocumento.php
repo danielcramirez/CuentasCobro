@@ -17,13 +17,17 @@ class CuentaCobroDocumento extends Model
         'archivo_path',
         'estado',
         'comentario_supervisor',
+        'fiduprevisora_estado',
+        'fiduprevisora_comentario',
         'cargado_at',
         'validado_at',
+        'fiduprevisora_validado_at',
     ];
 
     protected $casts = [
         'cargado_at' => 'datetime',
         'validado_at' => 'datetime',
+        'fiduprevisora_validado_at' => 'datetime',
     ];
 
     /**

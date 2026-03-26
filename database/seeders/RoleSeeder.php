@@ -13,6 +13,24 @@ class RoleSeeder extends Seeder
      */
     public function run(): void
     {
+        $legacyCentralRole = Roles::where('name', 'tesoreria')->first();
+        $centralRole = Roles::where('name', 'central de cuentas')->first();
+
+        if ($legacyCentralRole && !$centralRole) {
+            $legacyCentralRole->update([
+                'name' => 'central de cuentas',
+                'description' => 'Central de Cuentas - Revisa todos los documentos, aprueba y envia a Fiduprevisora',
+                'permissions' => [
+                    'view_all_cuenta_cobro',
+                    'view_cuenta_status',
+                    'review_all_documents',
+                    'approve_tesoreria',
+                    'reject_tesoreria',
+                    'send_to_fiduprevisora'
+                ],
+            ]);
+        }
+
         $roles = [
             [
                 'name' => 'contratista',
@@ -20,6 +38,7 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     'create_cuenta_cobro',
                     'view_own_cuenta_cobro',
+                    'view_cuenta_status',
                     'edit_own_cuenta_cobro',
                     'upload_documents',
                     'view_contract_info'
@@ -30,6 +49,7 @@ class RoleSeeder extends Seeder
                 'description' => 'Apoyo a la Supervisión - Revisa y valida las cuentas de cobro',
                 'permissions' => [
                     'view_cuenta_cobro',
+                    'view_cuenta_status',
                     'review_cuenta_cobro',
                     'approve_cuenta_cobro',
                     'reject_cuenta_cobro',
@@ -42,8 +62,31 @@ class RoleSeeder extends Seeder
                 'description' => 'Supervisión - Aprobación ejecutiva final',
                 'permissions' => [
                     'view_all_cuenta_cobro',
+                    'view_cuenta_status',
                     'final_approval',
                     'override_decisions'
+                ]
+            ],
+            [
+                'name' => 'central de cuentas',
+                'description' => 'Central de Cuentas - Revisa todos los documentos, aprueba y envia a Fiduprevisora',
+                'permissions' => [
+                    'view_all_cuenta_cobro',
+                    'view_cuenta_status',
+                    'review_all_documents',
+                    'approve_tesoreria',
+                    'reject_tesoreria',
+                    'send_to_fiduprevisora'
+                ]
+            ],
+            [
+                'name' => 'fiduprevisora',
+                'description' => 'Fiduprevisora - Gestiona el estado de pago',
+                'permissions' => [
+                    'view_all_cuenta_cobro',
+                    'view_cuenta_status',
+                    'mark_payment_in_progress',
+                    'mark_payment_done'
                 ]
             ],
             [
@@ -52,6 +95,7 @@ class RoleSeeder extends Seeder
                 'permissions' => [
                     'manage_users',
                     'manage_roles',
+                    'view_cuenta_status',
                     'view_reports',
                     'system_admin'
                 ]
@@ -59,7 +103,7 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($roles as $roleData) {
-            Roles::firstOrCreate(
+            Roles::updateOrCreate(
                 ['name' => $roleData['name']],
                 [
                     'description' => $roleData['description'],

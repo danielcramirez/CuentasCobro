@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use App\Models\User;
 use App\Models\Roles;
 use App\Models\CuentaCobro;
@@ -61,12 +62,27 @@ class AuthController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
+        $hasSignedDocsColumns = Schema::hasColumns('cuentas_cobro', [
+            'documento_1_firmado_path',
+            'documento_2_firmado_path',
+        ]);
+        $hasReturnedStageColumn = Schema::hasColumn('cuentas_cobro', 'returned_stage');
+        $roleDirectory = collect();
+
+        if ($user->hasRole('admin')) {
+            $roleDirectory = User::with('role')
+                ->whereNotNull('role_id')
+                ->orderBy('name')
+                ->get()
+                ->groupBy(fn ($item) => $item->role->name ?? 'sin_rol');
+        }
         
         // Datos básicos para todos los usuarios
         $dashboardData = [
             'user' => $user,
             'userRole' => $user->role ? $user->role->name : null,
-            'userRoleDescription' => $user->role ? $user->role->description : 'Sin rol asignado'
+            'userRoleDescription' => $user->role ? $user->role->description : 'Sin rol asignado',
+            'roleDirectory' => $roleDirectory,
         ];
 
         // Datos específicos para el admin
@@ -78,20 +94,15 @@ class AuthController extends Controller
                 'usersWithoutRoles' => User::whereNull('role_id')->count(),
                 'rolesStats' => Roles::withCount('users')->get(),
                 'recentUsers' => User::with('role')->latest()->limit(5)->get(),
-                'pendingMayorApprovals' => CuentaCobro::where('cuenta_status', 'aprobada')
-                    ->where('planilla_status', 'aprobada')
-                    ->where('mayor_status', 'pendiente')
-                    ->count(),
                 'systemRoles' => ['contratista', 'apoyo a la supervisión', 'supervisor', 'admin']
             ]);
         }
 
-        // Datos específicos para apoyo a la supervisión y supervisor
-        if ($user->hasAnyRole(['apoyo a la supervisión', 'apoyo a la supervision', 'apoyo a la supervicion', 'supervisor'])) {
+        // Datos específicos para apoyo a la supervisión
+        if ($user->hasAnyRole(['apoyo a la supervisión', 'apoyo a la supervision', 'apoyo a la supervicion'])) {
             $dashboardData = array_merge($dashboardData, [
-                'pendingReviews' => CuentaCobro::where(function ($query) {
-                    $query->where('cuenta_status', 'pendiente')
-                        ->orWhere('planilla_status', 'pendiente');
+                'pendingReviews' => CuentaCobro::whereHas('documentos', function ($query) {
+                    $query->where('estado', 'cargado');
                 })->count(),
                 'approvedToday' => CuentaCobro::whereDate('supervisor_reviewed_at', now()->toDateString())
                     ->where('cuenta_status', 'aprobada')
@@ -105,6 +116,24 @@ class AuthController extends Controller
             ]);
         }
 
+        if ($user->hasRole('supervisor')) {
+            $dashboardData = array_merge($dashboardData, [
+                'pendingSignature' => $hasSignedDocsColumns
+                    ? CuentaCobro::where('cuenta_status', 'aprobada')
+                        ->where('planilla_status', 'aprobada')
+                        ->whereNull('documento_1_firmado_path')
+                        ->whereNull('documento_2_firmado_path')
+                        ->count()
+                    : 0,
+                'signedToday' => $hasSignedDocsColumns
+                    ? CuentaCobro::whereDate('updated_at', now()->toDateString())
+                        ->whereNotNull('documento_1_firmado_path')
+                        ->whereNotNull('documento_2_firmado_path')
+                        ->count()
+                    : 0,
+            ]);
+        }
+
         // Datos específicos para contratista
         if ($user->hasRole('contratista')) {
             $dashboardData = array_merge($dashboardData, [
@@ -112,47 +141,43 @@ class AuthController extends Controller
                 'pendingApproval' => CuentaCobro::where('contractor_id', $user->id)
                     ->where(function ($query) {
                         $query->where('cuenta_status', 'pendiente')
-                            ->orWhere('planilla_status', 'pendiente')
-                            ->orWhere('mayor_status', 'pendiente');
+                            ->orWhere('planilla_status', 'pendiente');
                     })
                     ->count(),
                 'approved' => CuentaCobro::where('contractor_id', $user->id)
-                    ->where('mayor_status', 'aprobada')
+                    ->where('cuenta_status', 'aprobada')
+                    ->where('planilla_status', 'aprobada')
                     ->count(),
                 'rejected' => CuentaCobro::where('contractor_id', $user->id)
                     ->where(function ($query) {
                         $query->where('cuenta_status', 'rechazada')
-                            ->orWhere('planilla_status', 'rechazada')
-                            ->orWhere('mayor_status', 'rechazada');
+                            ->orWhere('planilla_status', 'rechazada');
                     })
                     ->count()
             ]);
         }
 
         // Datos específicos para tesorería
-        if ($user->hasRole('tesoreria')) {
+        if ($user->hasAnyRole(['central de cuentas', 'tesoreria'])) {
             $dashboardData = array_merge($dashboardData, [
-                'pendingPayments' => 0,
-                'paymentsToday' => 0,
-                'totalPaid' => 0
+                'pendingCentral' => CuentaCobro::where('cuenta_status', 'aprobada')
+                    ->where('planilla_status', 'aprobada')
+                    ->whereNotNull('documento_1_firmado_path')
+                    ->whereNotNull('documento_2_firmado_path')
+                    ->where('tesoreria_status', 'pendiente')
+                    ->count(),
+                'returnedByCentral' => $hasReturnedStageColumn
+                    ? CuentaCobro::where('returned_stage', 'tesoreria')->count()
+                    : 0,
+                'sentToFidu' => CuentaCobro::where('fiduprevisora_status', 'en_revision')->count(),
             ]);
         }
 
-        // Datos específicos para ordenador del gasto
-        if ($user->hasRole('ordenador_gasto')) {
+        if ($user->hasRole('fiduprevisora')) {
             $dashboardData = array_merge($dashboardData, [
-                'pendingAuthorizations' => 0,
-                'authorizedToday' => 0,
-                'budgetStatus' => 0
-            ]);
-        }
-
-        // Datos específicos para contratación
-        if ($user->hasRole('contratacion')) {
-            $dashboardData = array_merge($dashboardData, [
-                'activeContracts' => 0,
-                'pendingContracts' => 0,
-                'totalContractors' => 0
+                'pendingFiduDocs' => CuentaCobro::where('fiduprevisora_status', 'en_revision')->count(),
+                'readyForPayment' => CuentaCobro::where('fiduprevisora_status', 'en_tramite')->count(),
+                'paidAccounts' => CuentaCobro::where('fiduprevisora_status', 'pagado')->count(),
             ]);
         }
 

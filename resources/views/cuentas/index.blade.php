@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="mb-0">Cuentas de Cobro</h2>
-            <small class="text-muted">Flujo: Contratista -> Apoyo a la Supervisión -> Supervisor</small>
+            <small class="text-muted">Flujo: Contratista -> Supervisión -> Supervisor -> Central de Cuentas -> Fiduprevisora -> Pago</small>
         </div>
 
         @if($user->hasRole('contratista'))
@@ -34,42 +34,67 @@
                             <th>#</th>
                             <th>Contratista</th>
                             <th>Mes Cobrado</th>
-                            <th>Cuenta</th>
-                            <th>Planilla</th>
-                            <th>Admin</th>
+                            <th>Apoyo a la supervisión</th>
+                            <th>Supervisor</th>
+                            <th>Central de Cuentas</th>
+                            <th>Fiduprevisora</th>
                             <th>Actualizado</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($cuentas as $cuenta)
+                            @php
+                                $estadoApoyo = 'pendiente';
+
+                                if ($cuenta->cuenta_status === 'rechazada' || $cuenta->planilla_status === 'rechazada') {
+                                    $estadoApoyo = 'rechazada';
+                                } elseif ($cuenta->cuenta_status === 'aprobada' && $cuenta->planilla_status === 'aprobada') {
+                                    $estadoApoyo = 'aprobada';
+                                }
+
+                                $estadoSupervisor = $cuenta->documentosFirmadosCompletos() ? 'aprobada' : 'pendiente';
+                            @endphp
                             <tr>
                                 <td>{{ $cuenta->id }}</td>
                                 <td>{{ $cuenta->contractor->name ?? 'N/A' }}</td>
                                 <td>{{ $cuenta->billing_month }}</td>
                                 <td>
-                                    @if($cuenta->cuenta_status === 'aprobada')
+                                    @if($estadoApoyo === 'aprobada')
                                         <span class="badge bg-success">Aprobada</span>
-                                    @elseif($cuenta->cuenta_status === 'rechazada')
+                                    @elseif($estadoApoyo === 'rechazada')
                                         <span class="badge bg-danger">Rechazada</span>
                                     @else
                                         <span class="badge bg-secondary">Pendiente</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($cuenta->planilla_status === 'aprobada')
+                                    @if($estadoSupervisor === 'aprobada')
                                         <span class="badge bg-success">Aprobada</span>
-                                    @elseif($cuenta->planilla_status === 'rechazada')
-                                        <span class="badge bg-danger">Rechazada</span>
                                     @else
                                         <span class="badge bg-secondary">Pendiente</span>
                                     @endif
                                 </td>
                                 <td>
-                                    @if($cuenta->mayor_status === 'aprobada')
+                                    @if($cuenta->tesoreria_status === 'aprobada')
                                         <span class="badge bg-success">Aprobada</span>
-                                    @elseif($cuenta->mayor_status === 'rechazada')
+                                    @elseif($cuenta->tesoreria_status === 'rechazada')
                                         <span class="badge bg-danger">Rechazada</span>
+                                    @elseif($cuenta->documentosFirmadosCompletos() && $estadoApoyo === 'aprobada')
+                                        <span class="badge bg-warning text-dark">Pendiente Central</span>
+                                    @else
+                                        <span class="badge bg-secondary">Pendiente</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($cuenta->fiduprevisora_status === 'pagado')
+                                        <span class="badge bg-success">Pagado</span>
+                                    @elseif($cuenta->fiduprevisora_status === 'rechazada')
+                                        <span class="badge bg-danger">Rechazada</span>
+                                    @elseif($cuenta->fiduprevisora_status === 'en_revision')
+                                        <span class="badge bg-info text-dark">En revision</span>
+                                    @elseif($cuenta->fiduprevisora_status === 'en_tramite')
+                                        <span class="badge bg-warning text-dark">En tramite</span>
                                     @else
                                         <span class="badge bg-secondary">Pendiente</span>
                                     @endif
@@ -83,7 +108,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">No hay cuentas de cobro registradas.</td>
+                                <td colspan="9" class="text-center py-4 text-muted">No hay cuentas de cobro registradas.</td>
                             </tr>
                         @endforelse
                     </tbody>

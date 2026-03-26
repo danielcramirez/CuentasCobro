@@ -14,38 +14,75 @@ class OperativeUsersSeeder extends Seeder
      */
     public function run(): void
     {
-        $contratistaRole = Roles::where('name', 'contratista')->first();
-        $apoyoSupervisionRole = Roles::where('name', 'apoyo a la supervisión')->first();
+        $password = 'cosa1234';
 
-        if (!$contratistaRole || !$apoyoSupervisionRole) {
-            $this->command->error('No se encontraron los roles contratista o apoyo a la supervisión. Ejecuta RoleSeeder primero.');
+        $usuariosOperativos = [
+            [
+                'role' => 'contratista',
+                'name' => 'Usuario Contratista',
+                'email' => 'contratista@cuentascobro.local',
+            ],
+            [
+                'role' => 'apoyo a la supervisión',
+                'name' => 'Usuario Apoyo Supervisión',
+                'email' => 'apoyo@cuentascobro.local',
+            ],
+            [
+                'role' => 'supervisor',
+                'name' => 'Usuario Supervisor',
+                'email' => 'supervisor@cuentascobro.local',
+            ],
+            [
+                'role' => 'central de cuentas',
+                'name' => 'Usuario Central de Cuentas',
+                'email' => 'tesoreria@cuentascobro.local',
+            ],
+            [
+                'role' => 'fiduprevisora',
+                'name' => 'Usuario Fiduprevisora',
+                'email' => 'fiduprevisora@cuentascobro.local',
+            ],
+        ];
+
+        $roles = Roles::whereIn('name', array_column($usuariosOperativos, 'role'))
+            ->get()
+            ->keyBy('name');
+
+        $faltantes = [];
+        foreach ($usuariosOperativos as $item) {
+            if (!$roles->has($item['role'])) {
+                $faltantes[] = $item['role'];
+            }
+        }
+
+        if (!empty($faltantes)) {
+            $this->command->error('No se encontraron estos roles: ' . implode(', ', $faltantes) . '. Ejecuta RoleSeeder primero.');
             return;
         }
 
-        $contratista = User::updateOrCreate(
-            ['email' => 'contratista@cuentascobro.local'],
-            [
-                'name' => 'Usuario Contratista',
-                'email' => 'contratista@cuentascobro.local',
-                'password' => Hash::make('cosa1234'),
-                'role_id' => $contratistaRole->id,
-                'email_verified_at' => now(),
-            ]
-        );
+        $usuariosCreados = [];
 
-        $apoyoSupervision = User::updateOrCreate(
-            ['email' => 'apoyo@cuentascobro.local'],
-            [
-                'name' => 'Usuario Apoyo Supervisión',
-                'email' => 'apoyo@cuentascobro.local',
-                'password' => Hash::make('cosa1234'),
-                'role_id' => $apoyoSupervisionRole->id,
-                'email_verified_at' => now(),
-            ]
-        );
+        foreach ($usuariosOperativos as $item) {
+            $usuario = User::updateOrCreate(
+                ['email' => $item['email']],
+                [
+                    'name' => $item['name'],
+                    'email' => $item['email'],
+                    'password' => Hash::make($password),
+                    'role_id' => $roles[$item['role']]->id,
+                    'email_verified_at' => now(),
+                ]
+            );
 
-        $this->command->info('Usuarios operativos creados/actualizados:');
-        $this->command->info('Contratista: ' . $contratista->email . ' / cosa1234');
-        $this->command->info('Apoyo Supervisión: ' . $apoyoSupervision->email . ' / cosa1234');
+            $usuariosCreados[] = [
+                'role' => $item['role'],
+                'email' => $usuario->email,
+            ];
+        }
+
+        $this->command->info('Usuarios operativos creados/actualizados (password: ' . $password . '):');
+        foreach ($usuariosCreados as $usuario) {
+            $this->command->info(ucfirst($usuario['role']) . ': ' . $usuario['email']);
+        }
     }
 }

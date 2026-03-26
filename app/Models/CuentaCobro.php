@@ -19,6 +19,8 @@ class CuentaCobro extends Model
         'numero_cuenta',
         'cuenta_pdf_path',
         'planilla_pdf_path',
+        'documento_1_firmado_path',
+        'documento_2_firmado_path',
         'cuenta_status',
         'planilla_status',
         'cuenta_supervisor_comment',
@@ -29,7 +31,16 @@ class CuentaCobro extends Model
         'mayor_comment',
         'mayor_id',
         'mayor_reviewed_at',
+        'tesoreria_status',
+        'tesoreria_comment',
+        'tesoreria_id',
+        'tesoreria_reviewed_at',
+        'fiduprevisora_status',
+        'fiduprevisora_comment',
+        'fiduprevisora_id',
+        'fiduprevisora_reviewed_at',
         'returned_at',
+        'returned_stage',
     ];
 
     protected function casts(): array
@@ -37,6 +48,8 @@ class CuentaCobro extends Model
         return [
             'supervisor_reviewed_at' => 'datetime',
             'mayor_reviewed_at' => 'datetime',
+            'tesoreria_reviewed_at' => 'datetime',
+            'fiduprevisora_reviewed_at' => 'datetime',
             'returned_at' => 'datetime',
             'numero_cuenta' => 'integer',
         ];
@@ -102,6 +115,16 @@ class CuentaCobro extends Model
         return $this->belongsTo(User::class, 'mayor_id');
     }
 
+    public function tesoreria(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'tesoreria_id');
+    }
+
+    public function fiduprevisora(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'fiduprevisora_id');
+    }
+
     public function canGoToMayor(): bool
     {
         return $this->cuenta_status === 'aprobada' && $this->planilla_status === 'aprobada';
@@ -110,5 +133,27 @@ class CuentaCobro extends Model
     public function hasSupervisorRejection(): bool
     {
         return $this->cuenta_status === 'rechazada' || $this->planilla_status === 'rechazada';
+    }
+
+    public function canGoToTesoreria(): bool
+    {
+        return $this->cuenta_status === 'aprobada'
+            && $this->planilla_status === 'aprobada'
+            && $this->documentosFirmadosCompletos();
+    }
+
+    public function canGoToFiduprevisora(): bool
+    {
+        return $this->tesoreria_status === 'aprobada' && $this->documentosFirmadosCompletos();
+    }
+
+    public function documentosFirmadosCompletos(): bool
+    {
+        return !empty($this->documento_1_firmado_path) && !empty($this->documento_2_firmado_path);
+    }
+
+    public function hasReturnedBy(string $stage): bool
+    {
+        return $this->returned_stage === $stage && !is_null($this->returned_at);
     }
 }

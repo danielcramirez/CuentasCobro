@@ -157,6 +157,7 @@
                                                     <i class="fas fa-money-check-alt text-info me-1"></i>
                                                     @break
                                                 @case('tesoreria')
+                                                @case('central de cuentas')
                                                     <i class="fas fa-coins text-success me-1"></i>
                                                     @break
                                                 @case('contratacion')

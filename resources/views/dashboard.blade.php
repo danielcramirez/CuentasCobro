@@ -106,40 +106,9 @@
             </div>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                Pendientes Supervisor
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ $pendingMayorApprovals ?? 0 }}</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-file-signature fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
-    <div class="row">
-        <div class="col-12 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
-                    <div>
-                        <h5 class="mb-1">Aprobación final de pagos</h5>
-                        <p class="mb-0 text-muted">Revisa cuentas y planillas ya aprobadas por supervisor.</p>
-                    </div>
-                    <a href="{{ route('cuentas.index') }}" class="btn btn-success">Revisar cuentas aprobadas por supervisor</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Acciones Rápidas para Supervisor -->
+    <!-- Acciones Rápidas para Admin -->
     <div class="row">
         <div class="col-lg-6 mb-4">
             <div class="card shadow">
@@ -237,7 +206,7 @@
     </div>
     @endif
 
-    @if($userRole === 'supervisor')
+    @if(in_array($userRole, ['apoyo a la supervisión', 'apoyo a la supervision', 'apoyo a la supervicion']))
     <!-- Dashboard para Supervisor -->
     <div class="row">
         <div class="col-md-4 mb-3">
@@ -268,8 +237,8 @@
             <div class="card shadow-sm">
                 <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
                     <div>
-                        <h5 class="mb-1">Gestión de revisión</h5>
-                        <p class="mb-0 text-muted">Valida cuenta PDF y planilla PDF. Si rechazas, debes agregar motivo.</p>
+                        <h5 class="mb-1">Gestion de revision</h5>
+                        <p class="mb-0 text-muted">Valida cada documento y prepara la firma de los documentos 1 y 2.</p>
                     </div>
                     <a href="{{ route('cuentas.index') }}" class="btn btn-primary">
                         Ir a cuentas de cobro
@@ -332,6 +301,118 @@
     </div>
     @endif
 
+    @if(in_array($userRole, ['central de cuentas', 'tesoreria']))
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Pendientes Central de Cuentas</h6>
+                    <h3 class="mb-0">{{ $pendingCentral ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Devueltas al contratista</h6>
+                    <h3 class="mb-0 text-danger">{{ $returnedByCentral ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Enviadas a Fiduprevisora</h6>
+                    <h3 class="mb-0 text-success">{{ $sentToFidu ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1">Central de Cuentas</h5>
+                        <p class="mb-0 text-muted">Aquí aparecen cuentas aprobadas por apoyo a la supervisión y con documentos firmados, listas para revisión en Central de Cuentas.</p>
+                    </div>
+                    <a href="{{ route('cuentas.index') }}" class="btn btn-warning">Ir a Central de Cuentas</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($userRole === 'supervisor')
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Pendientes por firmar</h6>
+                    <h3 class="mb-0">{{ $pendingSignature ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Firmadas hoy</h6>
+                    <h3 class="mb-0 text-success">{{ $signedToday ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1">Firma de documentos</h5>
+                        <p class="mb-0 text-muted">Descarga los documentos 1 y 2 ya validados, firmalos y cargalos para Central de Cuentas.</p>
+                    </div>
+                    <a href="{{ route('cuentas.index') }}" class="btn btn-primary">Ir a cuentas de cobro</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if($userRole === 'fiduprevisora')
+    <div class="row">
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Pendientes por documento</h6>
+                    <h3 class="mb-0">{{ $pendingFiduDocs ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Listas para pago</h6>
+                    <h3 class="mb-0 text-warning">{{ $readyForPayment ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm h-100">
+                <div class="card-body text-center">
+                    <h6 class="text-muted">Pagadas</h6>
+                    <h3 class="mb-0 text-success">{{ $paidAccounts ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h5 class="mb-1">Revisión documental Fidu</h5>
+                        <p class="mb-0 text-muted">Aprueba o rechaza documento por documento y luego envía a pago.</p>
+                    </div>
+                    <a href="{{ route('cuentas.index') }}" class="btn btn-primary">Ir a revisión Fidu</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if(!$userRole)
     <!-- Usuario sin rol asignado -->
     <div class="row">
@@ -349,30 +430,32 @@
     </div>
     @endif
 
-    @if(in_array($userRole, ['ordenador_gasto', 'tesoreria', 'contratacion']))
-    <!-- Dashboard para otros roles -->
-    <div class="row">
+    @if($userRole === 'admin' && $roleDirectory->isNotEmpty())
+    <div class="row mt-4">
         <div class="col-12">
-            <div class="card shadow">
-                <div class="card-body text-center py-5">
-                    @switch($userRole)
-                        @case('ordenador_gasto')
-                            <i class="fas fa-money-check-alt fa-4x text-info mb-3"></i>
-                            <h4>Panel de Ordenador del Gasto</h4>
-                            <p class="text-muted">Aquí podrás autorizar pagos y gestionar presupuestos.</p>
-                            @break
-                        @case('tesoreria')
-                            <i class="fas fa-coins fa-4x text-success mb-3"></i>
-                            <h4>Panel de Tesorería</h4>
-                            <p class="text-muted">Aquí podrás procesar pagos y generar reportes financieros.</p>
-                            @break
-                        @case('contratacion')
-                            <i class="fas fa-handshake fa-4x text-primary mb-3"></i>
-                            <h4>Panel de Contratación</h4>
-                            <p class="text-muted">Aquí podrás gestionar contratos y contratistas.</p>
-                            @break
-                    @endswitch
-                    <p class="text-muted">Esta funcionalidad se implementará próximamente.</p>
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <strong>Usuarios por rol</strong>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        @foreach($roleDirectory as $roleName => $usersByRole)
+                        <div class="col-lg-4 col-md-6 mb-3">
+                            <div class="border rounded p-3 h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong>{{ ucfirst(str_replace('_', ' ', $roleName)) }}</strong>
+                                    <span class="badge bg-secondary">{{ $usersByRole->count() }}</span>
+                                </div>
+                                @foreach($usersByRole as $directoryUser)
+                                <div class="small mb-2">
+                                    <div class="fw-semibold">{{ $directoryUser->name }}</div>
+                                    <div class="text-muted">{{ $directoryUser->email }}</div>
+                                </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
                 </div>
             </div>
         </div>

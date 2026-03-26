@@ -47,13 +47,20 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/create', [CuentaCobroController::class, 'create'])->middleware('check.role:contratista')->name('create');
         Route::post('/', [CuentaCobroController::class, 'store'])->middleware('check.role:contratista')->name('store');
         Route::get('/{cuentaCobro}', [CuentaCobroController::class, 'show'])->name('show');
-        Route::post('/{cuentaCobro}/supervisor-review', [CuentaCobroController::class, 'supervisorReview'])->middleware('check.role:apoyo a la supervisión,apoyo a la supervision,apoyo a la supervicion,supervisor')->name('supervisor.review');
-        Route::post('/{cuentaCobro}/documento/{documento}/review', [CuentaCobroController::class, 'reviewDocumento'])->middleware('check.role:apoyo a la supervisión,apoyo a la supervision,apoyo a la supervicion,supervisor')->name('documento.review');
+        Route::post('/{cuentaCobro}/supervisor-review', [CuentaCobroController::class, 'supervisorReview'])->middleware('check.role:apoyo a la supervisión,apoyo a la supervision,apoyo a la supervicion')->name('supervisor.review');
+        Route::post('/{cuentaCobro}/documento/{documento}/review', [CuentaCobroController::class, 'reviewDocumento'])->middleware('check.role:apoyo a la supervisión,apoyo a la supervision,apoyo a la supervicion')->name('documento.review');
         Route::post('/{cuentaCobro}/alcalde-review', [CuentaCobroController::class, 'mayorReview'])->middleware('check.role:admin')->name('alcalde.review');
+        Route::post('/{cuentaCobro}/tesoreria-review', [CuentaCobroController::class, 'tesoreriaReview'])->middleware('check.role:central de cuentas,tesoreria')->name('tesoreria.review');
+        Route::post('/{cuentaCobro}/fiduprevisora-review', [CuentaCobroController::class, 'fiduprevisoraReview'])->middleware('check.role:fiduprevisora')->name('fiduprevisora.review');
+        Route::post('/{cuentaCobro}/fiduprevisora/documento/{documento}/review', [CuentaCobroController::class, 'reviewDocumentoFiduprevisora'])->middleware('check.role:fiduprevisora')->name('fiduprevisora.documento.review');
         Route::post('/{cuentaCobro}/resubmit', [CuentaCobroController::class, 'resubmit'])->middleware('check.role:contratista')->name('resubmit');
         Route::get('/{cuentaCobro}/download/{type}', [CuentaCobroController::class, 'download'])->name('download');
         Route::get('/{cuentaCobro}/preview/{type}', [CuentaCobroController::class, 'preview'])->name('preview');
         Route::get('/{cuentaCobro}/documento/{documento}/preview', [CuentaCobroController::class, 'previewDocumento'])->name('documento.preview');
+        Route::get('/{cuentaCobro}/documento/{documento}/download', [CuentaCobroController::class, 'downloadDocumento'])->name('documento.download');
+        Route::get('/{cuentaCobro}/documento-firmado/{numeroDocumento}/preview', [CuentaCobroController::class, 'previewFirmado'])->name('documento.firmado.preview');
+        Route::get('/{cuentaCobro}/documento-firmado/{numeroDocumento}/download', [CuentaCobroController::class, 'downloadFirmado'])->name('documento.firmado.download');
+        Route::post('/{cuentaCobro}/documentos-firmados', [CuentaCobroController::class, 'uploadFirmados'])->middleware('check.role:supervisor')->name('documentos.firmados.upload');
     });
     
     // Rutas adicionales para gestión de roles y usuarios
